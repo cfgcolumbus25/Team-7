@@ -1,0 +1,107 @@
+body {
+    margin: 0;
+    font-family: system-ui, sans-serif;
+    background: #f5f8fc;
+    /* light blue-gray background */
+    color: #222;
+}
+
+/* Layout */
+.app {
+    display: flex;
+    min-height: 100vh;
+}
+
+.sidebar {
+    width: 200px;
+    background: #1E88E5;
+    /* blue sidebar */
+    display: flex;
+    flex-direction: column;
+    padding: 1rem;
+    border-right: 1px solid #1565C0;
+    color: white;
+}
+
+.sidebar .logo {
+    font-weight: bold;
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+    color: #FFD600;
+    /* yellow accent */
+}
+
+.sidebar a {
+    color: #e3f2fd;
+    text-decoration: none;
+    padding: 0.5rem 0;
+    display: block;
+    transition: color 0.2s;
+}
+
+.sidebar a:hover {
+    color: #FFD600;
+    /* hover yellow */
+}
+
+.main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #1565C0;
+    /* deeper blue header */
+    padding: 1rem 2rem;
+    border-bottom: 1px solid #133755;
+    color: white;
+}
+
+.donate-btn {
+    background: #ffea00;
+    /* yellow button */
+    color: #0D47A1;
+    /* dark blue text */
+    border: none;
+    padding: 0.6rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: opacity 0.2s, transform 0.1s;
+}
+
+.donate-btn:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+/* Dashboard */
+.dashboard {
+    padding: 2rem;
+}
+
+.cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.card {
+    background: white;
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+    border-top: 4px solid #1E88E5;
+    transition: transform 0.1s;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
