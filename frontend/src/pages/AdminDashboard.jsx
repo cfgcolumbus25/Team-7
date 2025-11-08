@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ResearchTileCard } from "../components/ResearchTimeline.jsx";
 import { useUser } from "../contexts/UserContext.jsx";
+import { researchAPI } from "../services/api.js";
 
 // Animated tooltip component for achievements (scale from image)
 function Tooltip({ label, children }) {
@@ -308,53 +309,67 @@ export default function AdminDashboard() {
   const [previewProject, setPreviewProject] = useState(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editedTile, setEditedTile] = useState(null);
-  // ---- Change tracking & email preview state ----
-  const [showChangesModal, setShowChangesModal] = useState(false);
+  
+  // ---- Email preview state ----
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [emailContent, setEmailContent] = useState({ subject: "", body: "" });
   const [generatingEmail, setGeneratingEmail] = useState(false);
   const [emailError, setEmailError] = useState(null);
 
-  // Helpers for change tracking in localStorage
-  const CHANGE_LOG_KEY = "adminChangeLog";
-  const PUBLISH_TS_KEY = "adminLastPublishTs";
-
-  const getPublishTs = () => {
-    const ts = parseInt(localStorage.getItem(PUBLISH_TS_KEY) || "0", 10);
-    return isNaN(ts) ? 0 : ts;
-  };
-  const getChangeLog = () => {
-    try {
-      return JSON.parse(localStorage.getItem(CHANGE_LOG_KEY) || "[]");
-    } catch {
-      return [];
-    }
-  };
-  const addChangeEntry = (entry) => {
-    const log = getChangeLog();
-    log.push(entry);
-    localStorage.setItem(CHANGE_LOG_KEY, JSON.stringify(log));
-  };
-  const publishChanges = () => {
-    localStorage.setItem(PUBLISH_TS_KEY, Date.now().toString());
-    // Do NOT clear log: we may want historical; we filter by timestamp > publishTs.
-    alert(
-      "Changes marked as published. Future Email Changes will list new items only."
-    );
-  };
-  const changesSincePublish = () => {
-    const publishTs = getPublishTs();
-    return getChangeLog().filter((c) => c.timestamp > publishTs);
-  };
+  // ---- Fetch recent changes from database ----
+  const [recentChanges, setRecentChanges] = useState([]);
+  const [loadingChanges, setLoadingChanges] = useState(false);
 
   // Get user info from context
   const username = user?.username || "user";
   const IS_ADMIN = user?.isAdmin || user?.username === "ADMIN";
 
+  // Fetch recent research additions from Supabase (last 30 days)
+  useEffect(() => {
+    const fetchRecentChanges = async () => {
+      if (!IS_ADMIN) return;
+      
+      setLoadingChanges(true);
+      try {
+        const allResearch = await researchAPI.getAll();
+        
+        // Filter to show only items created in last 30 days
+        const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
+        const recent = allResearch
+          .filter(item => {
+            const createdAt = new Date(item.created_at).getTime();
+            return createdAt > thirtyDaysAgo;
+          })
+          .map(item => ({
+            id: item.id,
+            type: 'research_tile_added',
+            title: item.title,
+            year: item.year,
+            amount: item.money,
+            impact: item.impact?.slice(0, 140) || '',
+            timestamp: new Date(item.created_at).getTime()
+          }))
+          .sort((a, b) => b.timestamp - a.timestamp);
+        
+        setRecentChanges(recent);
+      } catch (error) {
+        console.error('Failed to fetch recent changes:', error);
+        setRecentChanges([]);
+      } finally {
+        setLoadingChanges(false);
+      }
+    };
+
+    fetchRecentChanges();
+    
+    // Refresh every 30 seconds to pick up new approvals
+    const interval = setInterval(fetchRecentChanges, 30000);
+    return () => clearInterval(interval);
+  }, [IS_ADMIN]);
+
   // Handler to generate AI email from changes
   const handleGenerateEmail = async () => {
-    const changes = changesSincePublish();
-    if (changes.length === 0) return;
+    if (recentChanges.length === 0) return;
 
     setGeneratingEmail(true);
     setEmailError(null);
@@ -362,7 +377,7 @@ export default function AdminDashboard() {
       const resp = await fetch("http://localhost:8000/generate-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ changes }),
+        body: JSON.stringify({ changes: recentChanges }),
       });
       const data = await resp.json();
       if (!resp.ok) throw new Error(data.error || "Failed to generate email");
@@ -376,14 +391,8 @@ export default function AdminDashboard() {
       setEmailError(err.message);
       // Fallback to basic template
       setEmailContent({
-        subject: "Pending Research Updates",
-        body: `Dear Stakeholders,\n\nWe have ${
-          changes.length
-        } new research update${
-          changes.length > 1 ? "s" : ""
-        } to share:\n\n${changes
-          .map((c) => `• ${c.title} (${c.year}) – ${c.amount}\n  ${c.impact}`)
-          .join("\n\n")}\n\nBest regards,\nResearch Team`,
+        subject: "Recent Research Updates",
+        body: `Dear Stakeholders,\n\nWe have ${recentChanges.length} research update${recentChanges.length > 1 ? "s" : ""} to share:\n\n${recentChanges.map((c) => `• ${c.title} (${c.year}) – ${c.amount}\n  ${c.impact}`).join("\n\n")}\n\nBest regards,\nResearch Team`,
       });
       setShowEmailModal(true);
     } finally {
@@ -391,7 +400,7 @@ export default function AdminDashboard() {
     }
   };
 
-  // Handler to reject tile (close preview without saving - does NOT add tile)
+  // Handler to reject tile (close preview without saving)
   const handleRejectTile = () => {
     setShowPreview(false);
     setPreviewProject(null);
@@ -399,60 +408,71 @@ export default function AdminDashboard() {
     setIsEditMode(false);
   };
 
-  // Handler to approve tile (ONLY called when user clicks "Looks Good" or "Save & Approve")
-  const handleApproveTile = () => {
+  // Handler to approve tile - saves to Supabase database ONLY
+  const handleApproveTile = async () => {
     if (!editedTile) return;
+    
+    try {
+      // Check if user is authenticated
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        alert('Please log in to add research tiles');
+        return;
+      }
 
-    // Save approved tile to localStorage
-    const approvedTiles = JSON.parse(
-      localStorage.getItem("approvedResearchTiles") || "[]"
-    );
-    const tileData = {
-      id: `approved-${Date.now()}`,
-      title: editedTile.title,
-      impact: editedTile.impact,
-      money: editedTile.money,
-      summary: editedTile.summary,
-      year: editedTile.year,
-      // Store full project data for reference (with updated fields)
-      projectData: {
-        ...previewProject,
-        title: editedTile.title,
-        timeline_snippet: editedTile.impact,
-        layman_summary: editedTile.summary,
-        fund_usage: {
-          ...(previewProject?.fund_usage || {}),
-          amount_display: editedTile.money
-            ? editedTile.money.replace(/[^0-9]/g, "")
-            : "0",
+      // Save to Supabase via backend API
+      const response = await fetch('http://localhost:8000/api/research/add', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
-      },
-    };
-    approvedTiles.push(tileData);
-    localStorage.setItem(
-      "approvedResearchTiles",
-      JSON.stringify(approvedTiles)
-    );
+        body: JSON.stringify({
+          title: editedTile.title,
+          year: editedTile.year,
+          impact: editedTile.impact,
+          money: editedTile.money,
+          summary: editedTile.summary,
+        }),
+      });
 
-    // Log change for email summary (approved research tile)
-    addChangeEntry({
-      id: tileData.id,
-      type: "research_tile_added",
-      timestamp: Date.now(),
-      title: editedTile.title,
-      year: editedTile.year,
-      amount: editedTile.money,
-      impact: editedTile.impact?.slice(0, 140) || "",
-    });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to save research tile');
+      }
 
-    // Close preview and reset state
-    setShowPreview(false);
-    setPreviewProject(null);
-    setEditedTile(null);
-    setIsEditMode(false);
+      const savedTile = await response.json();
+      console.log('Tile saved to Supabase:', savedTile);
 
-    // Show success message
-    alert("Research tile approved and added to timeline!");
+      // Refresh recent changes to show the new item
+      const allResearch = await researchAPI.getAll();
+      const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
+      const recent = allResearch
+        .filter(item => new Date(item.created_at).getTime() > thirtyDaysAgo)
+        .map(item => ({
+          id: item.id,
+          type: 'research_tile_added',
+          title: item.title,
+          year: item.year,
+          amount: item.money,
+          impact: item.impact?.slice(0, 140) || '',
+          timestamp: new Date(item.created_at).getTime()
+        }))
+        .sort((a, b) => b.timestamp - a.timestamp);
+      setRecentChanges(recent);
+      
+      // Close preview and reset state
+      setShowPreview(false);
+      setPreviewProject(null);
+      setEditedTile(null);
+      setIsEditMode(false);
+      
+      // Show success message
+      alert("Research tile approved and saved to database!");
+    } catch (error) {
+      console.error('Error saving tile:', error);
+      alert(`Failed to save tile: ${error.message}`);
+    }
   };
 
   // Set profile picture based on user role
@@ -856,7 +876,7 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            {/* Email Changes Panel (inline, same row) */}
+            {/* Recent Changes Panel - Now from Supabase */}
             <div
               style={{
                 background: "transparent",
@@ -865,39 +885,24 @@ export default function AdminDashboard() {
                 padding: 24,
               }}
             >
-              <h3
-                style={{
-                  margin: 0,
-                  fontSize: 20,
-                  fontWeight: 800,
-                  color: "#000",
-                }}
-              >
-                Changes Since Last Publish
+              <h3 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: "#000" }}>
+                Recent Research Additions
               </h3>
               <p style={{ margin: "8px 0 16px", color: "#555", fontSize: 14 }}>
-                Newly approved items not yet included in a publish cycle.
+                Research tiles added in the last 30 days (from database).
               </p>
-              {changesSincePublish().length === 0 && (
-                <div
-                  style={{
-                    padding: 16,
-                    background: "#f9fafb",
-                    border: "1px solid #e5e7eb",
-                    borderRadius: 8,
-                    color: "#555",
-                    fontSize: 14,
-                  }}
-                >
-                  No changes pending. Approve new research tiles to see them
-                  here.
+              
+              {loadingChanges ? (
+                <div style={{ padding: 16, textAlign: 'center', color: '#666' }}>
+                  Loading recent changes...
                 </div>
-              )}
-              {changesSincePublish().length > 0 && (
-                <div
-                  style={{ display: "flex", flexDirection: "column", gap: 12 }}
-                >
-                  {changesSincePublish().map((change) => (
+              ) : recentChanges.length === 0 ? (
+                <div style={{ padding: 16, background: "#f9fafb", border: "1px solid #e5e7eb", borderRadius: 8, color: "#555", fontSize: 14 }}>
+                  No recent additions. Approve new research tiles to see them here.
+                </div>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 12, maxHeight: 400, overflowY: 'auto' }}>
+                  {recentChanges.map((change) => (
                     <div
                       key={change.id}
                       style={{
@@ -910,49 +915,21 @@ export default function AdminDashboard() {
                         gap: 16,
                       }}
                     >
-                      <div
-                        style={{
-                          fontSize: 12,
-                          color: "#374151",
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: 4,
-                        }}
-                      >
+                      <div style={{ fontSize: 12, color: "#374151", display: "flex", flexDirection: "column", gap: 4 }}>
                         <span style={{ fontWeight: 600 }}>Type</span>
-                        <span
-                          style={{
-                            background: "#eff6ff",
-                            color: "#1d4ed8",
-                            padding: "4px 6px",
-                            borderRadius: 6,
-                            fontSize: 11,
-                          }}
-                        >
-                          {change.type.replace(/_/g, " ")}
+                        <span style={{ background: "#eff6ff", color: "#1d4ed8", padding: "4px 6px", borderRadius: 6, fontSize: 11 }}>
+                          New Research
                         </span>
-                        <span style={{ fontWeight: 600 }}>Time</span>
-                        <span>
-                          {new Date(change.timestamp).toLocaleString()}
-                        </span>
+                        <span style={{ fontWeight: 600 }}>Added</span>
+                        <span>{new Date(change.timestamp).toLocaleDateString()}</span>
                       </div>
-                      <div
-                        style={{
-                          fontSize: 13,
-                          color: "#111",
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: 6,
-                        }}
-                      >
+                      <div style={{ fontSize: 13, color: "#111", display: "flex", flexDirection: "column", gap: 6 }}>
                         <strong style={{ fontSize: 15 }}>{change.title}</strong>
                         <div style={{ color: "#0f172a" }}>
                           Year: {change.year} | Amount: {change.amount}
                         </div>
                         {change.impact && (
-                          <div style={{ color: "#475569" }}>
-                            {change.impact}
-                          </div>
+                          <div style={{ color: "#475569" }}>{change.impact}</div>
                         )}
                       </div>
                     </div>
@@ -962,15 +939,12 @@ export default function AdminDashboard() {
 
               {/* Email preview area */}
               <div style={{ marginTop: 20 }}>
-                <h4
-                  style={{ margin: "0 0 8px", fontSize: 18, fontWeight: 700 }}
-                >
+                <h4 style={{ margin: "0 0 8px", fontSize: 18, fontWeight: 700 }}>
                   Email Preview
                 </h4>
                 <div
                   style={{
-                    fontFamily:
-                      "ui-monospace, SFMono-Regular, Menlo, monospace",
+                    fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
                     fontSize: 13,
                     whiteSpace: "pre-wrap",
                     background: "#f8fafc",
@@ -979,58 +953,30 @@ export default function AdminDashboard() {
                     padding: 14,
                   }}
                 >
-                  {`Subject: Pending Research Updates\n\n${
-                    changesSincePublish().length === 0
-                      ? "No new items since last publish."
-                      : changesSincePublish()
-                          .map((c) => `• ${c.title} (${c.year}) – ${c.amount}`)
-                          .join("\n")
-                  }\n\nNext step: Review these items and confirm before sending to stakeholders.\n\n-- Placeholder Generated Email`}
+{`Subject: Recent Research Updates\n\n${recentChanges.length === 0 ? "No recent additions." : recentChanges.slice(0, 3).map((c) => `• ${c.title} (${c.year}) – ${c.amount}`).join("\n")}\n\n${recentChanges.length > 3 ? `...and ${recentChanges.length - 3} more\n\n` : ""}Click "Generate & Send Email" to create a full AI-powered email.`}
                 </div>
               </div>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "flex-end",
-                  gap: 12,
-                  marginTop: 16,
-                }}
-              >
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: 12, marginTop: 16 }}>
                 <button
                   type="button"
                   onClick={handleGenerateEmail}
-                  disabled={
-                    changesSincePublish().length === 0 || generatingEmail
-                  }
+                  disabled={recentChanges.length === 0 || generatingEmail}
                   style={{
-                    background:
-                      changesSincePublish().length === 0 || generatingEmail
-                        ? "#94a3b8"
-                        : "#2563eb",
+                    background: recentChanges.length === 0 || generatingEmail ? "#94a3b8" : "#2563eb",
                     border: "none",
                     color: "#fff",
                     padding: "10px 20px",
                     fontSize: 14,
                     fontWeight: 600,
                     borderRadius: 8,
-                    cursor:
-                      changesSincePublish().length === 0 || generatingEmail
-                        ? "not-allowed"
-                        : "pointer",
+                    cursor: recentChanges.length === 0 || generatingEmail ? "not-allowed" : "pointer",
                   }}
                 >
                   {generatingEmail ? "Generating..." : "Generate & Send Email"}
                 </button>
               </div>
               {emailError && (
-                <div
-                  style={{
-                    color: "#ef4444",
-                    fontSize: 13,
-                    marginTop: 8,
-                    textAlign: "right",
-                  }}
-                >
+                <div style={{ color: "#ef4444", fontSize: 13, marginTop: 8, textAlign: "right" }}>
                   {emailError}
                 </div>
               )}
@@ -1337,202 +1283,6 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
-      {/* Changes Email Modal */}
-      {showChangesModal && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: "rgba(0,0,0,0.45)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 1100,
-          }}
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setShowChangesModal(false);
-          }}
-        >
-          <div
-            style={{
-              background: "#fff",
-              borderRadius: 12,
-              padding: 28,
-              width: "90%",
-              maxWidth: 760,
-              maxHeight: "90vh",
-              overflow: "auto",
-              boxShadow:
-                "0 20px 25px -5px rgba(0,0,0,0.1),0 10px 10px -5px rgba(0,0,0,0.04)",
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 style={{ margin: "0 0 8px", fontSize: 24, fontWeight: 800 }}>
-              Changes Since Last Publish
-            </h3>
-            <p style={{ margin: "0 0 18px", color: "#555", fontSize: 14 }}>
-              These are newly approved items not yet included in a publish cycle
-            </p>
-            {changesSincePublish().length === 0 && (
-              <div
-                style={{
-                  padding: 16,
-                  background: "#f9fafb",
-                  border: "1px solid #e5e7eb",
-                  borderRadius: 8,
-                  color: "#555",
-                  fontSize: 14,
-                }}
-              >
-                No changes pending. Approve new research tiles to see them here.
-              </div>
-            )}
-            {changesSincePublish().length > 0 && (
-              <div
-                style={{ display: "flex", flexDirection: "column", gap: 12 }}
-              >
-                {changesSincePublish().map((change) => (
-                  <div
-                    key={change.id}
-                    style={{
-                      border: "1px solid #e5e7eb",
-                      background: "#fdfdfd",
-                      borderRadius: 10,
-                      padding: 14,
-                      display: "grid",
-                      gridTemplateColumns: "120px 1fr",
-                      gap: 16,
-                    }}
-                  >
-                    <div
-                      style={{
-                        fontSize: 12,
-                        color: "#374151",
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 4,
-                      }}
-                    >
-                      <span style={{ fontWeight: 600 }}>Type</span>
-                      <span
-                        style={{
-                          background: "#eff6ff",
-                          color: "#1d4ed8",
-                          padding: "4px 6px",
-                          borderRadius: 6,
-                          fontSize: 11,
-                        }}
-                      >
-                        {change.type.replace(/_/g, " ")}
-                      </span>
-                      <span style={{ fontWeight: 600 }}>Time</span>
-                      <span>{new Date(change.timestamp).toLocaleString()}</span>
-                    </div>
-                    <div
-                      style={{
-                        fontSize: 13,
-                        color: "#111",
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 6,
-                      }}
-                    >
-                      <strong style={{ fontSize: 15 }}>{change.title}</strong>
-                      <div style={{ color: "#0f172a" }}>
-                        Year: {change.year} | Amount: {change.amount}
-                      </div>
-                      {change.impact && (
-                        <div style={{ color: "#475569" }}>{change.impact}</div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-            {/* Email preview area */}
-            <div style={{ marginTop: 24 }}>
-              <h4 style={{ margin: "0 0 8px", fontSize: 18, fontWeight: 700 }}>
-                Email Preview
-              </h4>
-              <div
-                style={{
-                  fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
-                  fontSize: 13,
-                  whiteSpace: "pre-wrap",
-                  background: "#f8fafc",
-                  border: "1px solid #e2e8f0",
-                  borderRadius: 8,
-                  padding: 14,
-                }}
-              >
-                {`Subject: Pending Research Updates\n\n${
-                  changesSincePublish().length === 0
-                    ? "No new items since last publish."
-                    : changesSincePublish()
-                        .map((c) => `• ${c.title} (${c.year}) – ${c.amount}`)
-                        .join("\n")
-                }\n\nNext step: Review these items and confirm before sending to stakeholders.\n\n--`}
-              </div>
-            </div>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "flex-end",
-                gap: 12,
-                marginTop: 24,
-              }}
-            >
-              <button
-                type="button"
-                onClick={() => setShowChangesModal(false)}
-                style={{
-                  background: "#fff",
-                  border: "1px solid #d1d5db",
-                  color: "#374151",
-                  padding: "10px 20px",
-                  fontSize: 14,
-                  fontWeight: 600,
-                  borderRadius: 8,
-                  cursor: "pointer",
-                }}
-              >
-                Close
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  console.log(
-                    "Placeholder send email with changes",
-                    changesSincePublish()
-                  );
-                  alert("Email Sent");
-                }}
-                disabled={changesSincePublish().length === 0}
-                style={{
-                  background:
-                    changesSincePublish().length === 0 ? "#94a3b8" : "#2563eb",
-                  border: "none",
-                  color: "#fff",
-                  padding: "10px 20px",
-                  fontSize: 14,
-                  fontWeight: 600,
-                  borderRadius: 8,
-                  cursor:
-                    changesSincePublish().length === 0
-                      ? "not-allowed"
-                      : "pointer",
-                }}
-              >
-                Send Email
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Email Edit Modal */}
       {showEmailModal && (
         <div
