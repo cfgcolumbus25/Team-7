@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, TextField, Button, Typography, Container, Alert } from '@mui/material';
+import { useUser } from '../contexts/UserContext.jsx';
 
 // test credentials
 const TEST_USERS = {
@@ -13,6 +14,7 @@ export default function SignIn() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const { login } = useUser();
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -28,13 +30,8 @@ export default function SignIn() {
     // toggle variable to track if user is admin
     const isAdmin = user.isAdmin;
 
-    // store user info in localStorage
-    localStorage.setItem('isAuthenticated', 'true');
-    localStorage.setItem('username', username);
-    localStorage.setItem('isAdmin', isAdmin.toString());
-
-    // trigger a custom event to notify other components of auth change
-    window.dispatchEvent(new Event('storage'));
+    // Use context to update user state (this also updates localStorage)
+    login(username, isAdmin);
 
     // redirect based on role
     if (isAdmin) {

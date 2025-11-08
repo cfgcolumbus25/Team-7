@@ -1,38 +1,12 @@
-import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useUser } from '../contexts/UserContext.jsx';
 
 export default function Header() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const navigate = useNavigate();
-
-  // Check authentication status on mount and when localStorage changes
-  useEffect(() => {
-    const checkAuth = () => {
-      const authStatus = localStorage.getItem('isAuthenticated') === 'true';
-      setIsAuthenticated(authStatus);
-    };
-
-    checkAuth();
-    // Listen for storage changes (e.g., when user signs in from another tab)
-    window.addEventListener('storage', checkAuth);
-    
-    // Also check periodically in case localStorage is updated in the same tab
-    const interval = setInterval(checkAuth, 100);
-
-    return () => {
-      window.removeEventListener('storage', checkAuth);
-      clearInterval(interval);
-    };
-  }, []);
+  const { user, logout } = useUser();
 
   const handleSignOut = () => {
-    // Clear authentication data
-    localStorage.removeItem('isAuthenticated');
-    localStorage.removeItem('username');
-    localStorage.removeItem('isAdmin');
-    setIsAuthenticated(false);
-    // Trigger storage event to update other components
-    window.dispatchEvent(new Event('storage'));
+    logout();
     // Redirect to home page
     navigate('/');
   };
@@ -135,7 +109,7 @@ export default function Header() {
 
       <div className="header-actions">
         <button className="donate-btn">Donate</button>
-        {isAuthenticated ? (
+        {user.isAuthenticated ? (
           <button className="sign-in-btn" onClick={handleSignOut}>
             Sign Out
           </button>

@@ -4,6 +4,7 @@ import AdminDashboard from "./pages/AdminDashboard.jsx";
 import SignIn from "./pages/SignIn.jsx";
 import Header from "./components/header.jsx";
 import NavBar from "./components/NavBar.jsx";
+import { UserProvider } from "./contexts/UserContext.jsx";
 
 function Layout() {
   return (
@@ -22,14 +23,16 @@ function Layout() {
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Layout />}>
-          <Route index element={<Overview />} />
-          <Route path="admin" element={<AdminDashboard />} />
-          <Route path="signin" element={<SignIn />} />
-        </Route>
-      </Routes>
-    </BrowserRouter>
+    <UserProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Layout />}>
+            <Route index element={<Overview />} />
+            <Route path="admin" element={<AdminDashboard />} />
+            <Route path="signin" element={<SignIn />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </UserProvider>
   );
 }

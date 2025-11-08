@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useUser } from "../contexts/UserContext.jsx";
 
 // Tiny tooltip component
 function Tooltip({ label, children }) {
@@ -122,7 +123,10 @@ function BarChart({ width = 800, height = 360, data = [] }) {
   );
 }
 
-export default function AdminDashboard({ currentUser }) {
+export default function AdminDashboard() {
+  // Get user state from context
+  const { user } = useUser();
+  
   // Example data; replace with API data later
   const donations = useMemo(
     () => [
@@ -143,9 +147,9 @@ export default function AdminDashboard({ currentUser }) {
   const [uploadResult, setUploadResult] = useState(null);
   const [file, setFile] = useState(null);
 
-  // Hardcoded admin check: show admin section ONLY if username === 'ADMIN'
-  const username = currentUser?.username || 'user';
-  const IS_ADMIN = currentUser?.username === 'ADMIN';
+  // Get user info from context
+  const username = user?.username || 'user';
+  const IS_ADMIN = user?.isAdmin || user?.username === 'ADMIN';
 
   // Replace these with your uploaded images (served from /public at the site root)
   // Your file currently lives at frontend/public/profile.jpeg, so reference it at "/profile.jpeg"
