@@ -1,35 +1,71 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Outlet,
+  NavLink,
+} from "react-router-dom";
+import Overview from "./pages/Overview.jsx";
+import AdminDashboard from "./pages/AdminDashboard.jsx";
 
-function App() {
-  const [count, setCount] = useState(0)
-
+function Layout() {
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <div
+      style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}
+    >
+      <header
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 16,
+          padding: "12px 20px",
+          borderBottom: "1px solid #eee",
+          position: "sticky",
+          top: 0,
+          background: "#fff",
+          zIndex: 10,
+        }}
+      >
+        <strong style={{ marginRight: 12 }}>My App</strong>
+        <NavLink
+          to="/"
+          end
+          style={({ isActive }) => ({
+            textDecoration: "none",
+            color: isActive ? "#6366f1" : "#111",
+            fontWeight: isActive ? "600" : "400",
+          })}
+        >
+          Overview
+        </NavLink>
+        <NavLink
+          to="/admin"
+          style={({ isActive }) => ({
+            textDecoration: "none",
+            color: isActive ? "#6366f1" : "#111",
+            fontWeight: isActive ? "600" : "400",
+          })}
+        >
+          Admin Dashboard
+        </NavLink>
+      </header>
+
+      <main style={{ padding: 24, flex: 1 }}>
+        <Outlet />
+      </main>
+    </div>
+  );
 }
 
-export default App
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Layout />}>
+          <Route index element={<Overview />} />
+          <Route path="admin" element={<AdminDashboard />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
+  );
+}
