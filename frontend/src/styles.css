@@ -165,11 +165,20 @@ body::before {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #133755;
+  background: #1565c0;
   padding: 1rem 2rem;
   color: #fff;
   flex-wrap: wrap;
   position: relative;
+}
+
+.header-logo {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .nav-bar {
