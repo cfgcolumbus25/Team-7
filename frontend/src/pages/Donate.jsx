@@ -24,9 +24,9 @@ export default function Donate() {
   }
 
   return (
-    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem' }}>
+    <>
       {/* Back to Overview button */}
-      <div style={{ marginBottom: '1.5rem' }}>
+      <div style={{ position: "absolute", top: 24, left: 24, zIndex: 10 }}>
         <button
           type="button"
           onClick={() => navigate("/")}
@@ -57,7 +57,8 @@ export default function Donate() {
           <span>Back to Overview</span>
         </button>
       </div>
-      {/* Page header */}
+      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem' }}>
+        {/* Page header */}
       <div style={{ marginBottom: '2rem' }}>
         <h2 style={{ fontSize: '2rem', fontWeight: '700', marginBottom: '0.5rem', color: '#1e293b' }}>
           Donate
@@ -327,7 +328,8 @@ export default function Donate() {
           </p>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }
 

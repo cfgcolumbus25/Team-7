@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Box, TextField, Button, Typography, Container, Alert } from '@mui/material';
 import { useUser } from '../contexts/UserContext.jsx';
 
@@ -58,7 +58,39 @@ export default function SignIn() {
   }, []);
   return (
     // ensure this page takes full viewport so footer sits below the fold
-    <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 4 }}>
+    <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 4, position: 'relative' }}>
+      {/* Back to Overview button */}
+      <div style={{ position: "absolute", top: 24, left: 24, zIndex: 10 }}>
+        <button
+          type="button"
+          onClick={() => navigate("/")}
+          style={{
+            background: "#fff",
+            border: "1px solid #e0e0e0",
+            color: "#000000",
+            padding: "10px 20px",
+            fontSize: 14,
+            fontWeight: 600,
+            borderRadius: 8,
+            cursor: "pointer",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 8,
+            transition: "all 0.2s ease",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "#f5f5f5";
+            e.currentTarget.style.borderColor = "#d0d0d0";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "#fff";
+            e.currentTarget.style.borderColor = "#e0e0e0";
+          }}
+        >
+          <span>←</span>
+          <span>Back to Overview</span>
+        </button>
+      </div>
       {/* Border wrapper that continuously surrounds both sides */}
       <Box
         sx={{
@@ -86,24 +118,6 @@ export default function SignIn() {
               <Typography component="h1" variant="h4" gutterBottom>
                 Sign In
               </Typography>
-              <Link
-                to="/"
-                style={{
-                  color: '#1565c0',
-                  textDecoration: 'none',
-                  fontSize: '0.9rem',
-                  display: 'inline-block',
-                  marginTop: '0.5rem',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.textDecoration = 'underline';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.textDecoration = 'none';
-                }}
-              >
-                ← Back to Overview
-              </Link>
             </Box>
             <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
               {error && (
