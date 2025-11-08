@@ -1,14 +1,15 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import DonationForm from '../components/DonationForm';
+import DonationTypeSelector from '../components/DonationTypeSelector';
+import HeroStoryCarousel from '../components/HeroStoryCarousel';
+import LiveDonationsFeed from '../components/LiveDonationsFeed';
 
 export default function Donate() {
   const navigate = useNavigate();
-  // Template state only (no side effects)
-  const [type, setType] = useState('individual'); // 'individual' | 'team'
-  const [donorName, setDonorName] = useState('');
-  const [teamName, setTeamName] = useState('');
-  const [amount, setAmount] = useState('');
-  const [message, setMessage] = useState('');
+  const [donationType, setDonationType] = useState('individual');
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
   const handleDonationSuccess = (result) => {
     setSuccessMessage(
@@ -281,6 +282,19 @@ export default function Donate() {
         </div>
       </div>
       </div>
+
+      <style>{`
+        @keyframes slideDown {
+          from {
+            opacity: 0;
+            transform: translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
     </div>
   );
 }
