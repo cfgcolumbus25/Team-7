@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import DonationForm from '../components/DonationForm';
 import DonationTypeSelector from '../components/DonationTypeSelector';
 import HeroStoryCarousel from '../components/HeroStoryCarousel';
@@ -28,6 +29,29 @@ export default function Donate() {
 
   return (
     <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem' }}>
+      {/* Back to Home Link */}
+      <Link 
+        to="/" 
+        style={{ 
+          display: 'inline-flex', 
+          alignItems: 'center', 
+          gap: '0.5rem',
+          color: '#1E88E5',
+          textDecoration: 'none',
+          marginBottom: '1rem',
+          fontSize: '0.9375rem',
+          fontWeight: '500',
+          transition: 'color 0.2s',
+        }}
+        onMouseEnter={(e) => e.currentTarget.style.color = '#1565C0'}
+        onMouseLeave={(e) => e.currentTarget.style.color = '#1E88E5'}
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+        Back to Home
+      </Link>
+
       {/* Page header */}
       <div style={{ marginBottom: '2rem' }}>
         <h1 style={{ 
