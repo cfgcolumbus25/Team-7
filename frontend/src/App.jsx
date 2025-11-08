@@ -1,12 +1,8 @@
-import {
-    BrowserRouter,
-    Outlet,
-    Route,
-    Routes
-} from "react-router-dom";
-import Header from "./components/Header.jsx";
-import AdminDashboard from "./pages/AdminDashboard.jsx";
+import { BrowserRouter, Outlet, Route, Routes } from "react-router-dom";
 import Overview from "./pages/Overview.jsx";
+import AdminDashboard from "./pages/AdminDashboard.jsx";
+import Header from "./components/header.jsx";
+import NavBar from "./components/NavBar.jsx";
 
 function Layout() {
   return (
@@ -14,6 +10,7 @@ function Layout() {
       style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}
     >
       <Header />
+      <NavBar />
 
       <main style={{ padding: 24, flex: 1 }}>
         <Outlet />
