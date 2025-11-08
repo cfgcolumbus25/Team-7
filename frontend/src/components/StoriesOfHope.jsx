@@ -3,32 +3,38 @@ export default function StoriesOfHope() {
     {
       quote: "The Lilabean Foundation gave us hope when we needed it most. Their support helped our family through the darkest times, and the research they fund is saving lives every day.",
       author: "Jennifer Martinez",
-      role: "Parent & Advocate"
+      role: "Parent & Advocate",
+      image: "/hero-1.jpg" // Add your image path here
     },
     {
       quote: "Thanks to Lilabean's funding, we've made breakthrough discoveries that are already improving treatment protocols. This partnership is transforming pediatric brain cancer research.",
       author: "Dr. David Chen",
-      role: "Lead Researcher, CHOP"
+      role: "Lead Researcher, CHOP",
+      image: "/hero-2.jpg" // Add your image path here
     },
     {
       quote: "Being part of the Lilabean community showed me that even in grief, we can create meaningful change. Together, we're making sure no family faces this journey alone.",
       author: "Michael Thompson",
-      role: "Volunteer & Monthly Donor"
+      role: "Volunteer & Monthly Donor",
+      image: "/hero-3.jpg" // Add your image path here
     },
     {
       quote: "Every dollar donated goes directly to research that matters. The transparency and impact of Lilabean's work gives us confidence that we're truly making a difference.",
       author: "Sarah Williams",
-      role: "Donor & Supporter"
+      role: "Donor & Supporter",
+      image: "/hero-4.jpg" // Add your image path here
     },
     {
       quote: "The foundation's commitment to pediatric brain cancer research has accelerated our work in ways we never imagined. Their support is changing the future for children everywhere.",
       author: "Dr. Emily Rodriguez",
-      role: "Research Director, St. Jude"
+      role: "Research Director, St. Jude",
+      image: "/hero-5.jpg" // Add your image path here
     },
     {
       quote: "When our daughter was diagnosed, Lilabean was there. Not just with funding, but with a community that understood our journey. That support was everything.",
       author: "Robert Kim",
-      role: "Parent & Fundraiser"
+      role: "Parent & Fundraiser",
+      image: "/hero-6.jpg" // Add your image path here
     }
   ];
 
@@ -80,13 +86,44 @@ export default function StoriesOfHope() {
               position: 'relative'
             }}
           >
+            {/* Survivor Photo - positioned in top right */}
+            {story.image && (
+              <div style={{
+                position: 'absolute',
+                top: '1.5rem',
+                right: '1.5rem',
+                width: '70px',
+                height: '70px',
+                borderRadius: '50%',
+                overflow: 'hidden',
+                border: '3px solid #FFEAA7',
+                boxShadow: '0 2px 6px rgba(0, 0, 0, 0.15)',
+                zIndex: 1
+              }}>
+                <img
+                  src={story.image}
+                  alt={story.author}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover'
+                  }}
+                  onError={(e) => {
+                    // Hide image if it fails to load
+                    e.target.style.display = 'none';
+                  }}
+                />
+              </div>
+            )}
+            
             <div style={{
               fontSize: '4rem',
               fontWeight: '700',
               color: '#000',
               lineHeight: '1',
               marginBottom: '1rem',
-              fontFamily: 'Georgia, serif'
+              fontFamily: 'Georgia, serif',
+              marginRight: story.image ? '80px' : '0' // Add space for image if present
             }}>
               "
             </div>
