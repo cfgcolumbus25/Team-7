@@ -700,5 +700,44 @@ def add_research_manual():
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
+@app.route("/api/research/update/<research_id>", methods=["PUT", "OPTIONS"])
+@require_auth
+def update_research(research_id):
+    """Update an existing research tile (admin only)."""
+    if request.method == "OPTIONS":
+        return ("", 204)
+    
+    try:
+        data = request.get_json() or {}
+        
+        title = data.get("title", "").strip()
+        year = data.get("year")
+        impact = data.get("impact", "").strip()
+        money = data.get("money", "").strip()
+        
+        if not title or not year:
+            return jsonify({"error": "Title and year are required"}), 400
+        
+        # Update in Supabase
+        result = supabase.table("research_data").update({
+            "title": title,
+            "year": int(year),
+            "impact": impact,
+            "money": money,
+            "updated_at": datetime.utcnow().isoformat()
+        }).eq("id", research_id).execute()
+        
+        if not result.data:
+            return jsonify({"error": "Research tile not found"}), 404
+        
+        print(f"Successfully updated research tile: {research_id}")
+        return jsonify(result.data[0]), 200
+        
+    except Exception as e:
+        print(f"Error updating research: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", "8000")), debug=True)
