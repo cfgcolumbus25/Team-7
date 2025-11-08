@@ -1,14 +1,14 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import DonationForm from '../components/DonationForm';
-import DonationTypeSelector from '../components/DonationTypeSelector';
-import HeroStoryCarousel from '../components/HeroStoryCarousel';
-import LiveDonationsFeed from '../components/LiveDonationsFeed';
+import { useNavigate } from 'react-router-dom';
 
 export default function Donate() {
-  const [donationType, setDonationType] = useState('individual');
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [successMessage, setSuccessMessage] = useState('');
+  const navigate = useNavigate();
+  // Template state only (no side effects)
+  const [type, setType] = useState('individual'); // 'individual' | 'team'
+  const [donorName, setDonorName] = useState('');
+  const [teamName, setTeamName] = useState('');
+  const [amount, setAmount] = useState('');
+  const [message, setMessage] = useState('');
 
   const handleDonationSuccess = (result) => {
     setSuccessMessage(
@@ -28,31 +28,42 @@ export default function Donate() {
   };
 
   return (
-    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem' }}>
-      {/* Back to Home Link */}
-      <Link 
-        to="/" 
-        style={{ 
-          display: 'inline-flex', 
-          alignItems: 'center', 
-          gap: '0.5rem',
-          color: '#1E88E5',
-          textDecoration: 'none',
-          marginBottom: '1rem',
-          fontSize: '0.9375rem',
-          fontWeight: '500',
-          transition: 'color 0.2s',
-        }}
-        onMouseEnter={(e) => e.currentTarget.style.color = '#1565C0'}
-        onMouseLeave={(e) => e.currentTarget.style.color = '#1E88E5'}
-      >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <polyline points="15 18 9 12 15 6"></polyline>
-        </svg>
-        Back to Home
-      </Link>
-
-      {/* Page header */}
+    <div style={{ position: 'relative', width: '100%' }}>
+      {/* Back to Overview button */}
+      <div style={{ position: "absolute", top: 0, left: 0, zIndex: 10 }}>
+        <button
+          type="button"
+          onClick={() => navigate("/")}
+          style={{
+            background: "#fff",
+            border: "1px solid #e0e0e0",
+            color: "#000000",
+            padding: "10px 20px",
+            fontSize: 14,
+            fontWeight: 600,
+            borderRadius: 8,
+            cursor: "pointer",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 8,
+            transition: "all 0.2s ease",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "#f5f5f5";
+            e.currentTarget.style.borderColor = "#d0d0d0";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "#fff";
+            e.currentTarget.style.borderColor = "#e0e0e0";
+          }}
+        >
+          <span>←</span>
+          <span>Back to Overview</span>
+        </button>
+      </div>
+      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem' }}>
+        {/* Page header */}
       <div style={{ marginBottom: '2rem' }}>
         <h1 style={{ 
           fontSize: '2.5rem', 
@@ -269,19 +280,7 @@ export default function Donate() {
           </div>
         </div>
       </div>
-
-      <style>{`
-        @keyframes slideDown {
-          from {
-            opacity: 0;
-            transform: translateY(-10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-      `}</style>
+      </div>
     </div>
   );
 }

@@ -1,0 +1,58 @@
+[
+  {
+    "id": 1,
+    "name": "Charity Golf Tournament",
+    "state": "CA",
+    "city": "Los Angeles",
+    "date": "2024-05-20",
+    "type": "Sports"
+  },
+  {
+    "id": 2,
+    "name": "Spring Gala",
+    "state": "CA",
+    "city": "San Francisco",
+    "date": "2024-03-15",
+    "type": "Fundraiser"
+  },
+  {
+    "id": 3,
+    "name": "Research Symposium",
+    "state": "MD",
+    "city": "Baltimore",
+    "date": "2024-06-10",
+    "type": "Conference"
+  },
+  {
+    "id": 4,
+    "name": "Community Walk",
+    "state": "MD",
+    "city": "Annapolis",
+    "date": "2024-04-22",
+    "type": "Community"
+  },
+  {
+    "id": 5,
+    "name": "Awareness Campaign",
+    "state": "TX",
+    "city": "Houston",
+    "date": "2024-07-05",
+    "type": "Awareness"
+  },
+  {
+    "id": 6,
+    "name": "Black Tie Event",
+    "state": "TX",
+    "city": "Dallas",
+    "date": "2024-09-18",
+    "type": "Fundraiser"
+  },
+  {
+    "id": 7,
+    "name": "5K Run",
+    "state": "TX",
+    "city": "Austin",
+    "date": "2024-08-12",
+    "type": "Sports"
+  }
+]

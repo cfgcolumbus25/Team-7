@@ -1,6 +1,6 @@
+import { Alert, Box, Button, Container, TextField, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { Box, TextField, Button, Typography, Container, Alert } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 import { useUser } from '../contexts/UserContext.jsx';
 
 // test credentials
@@ -86,24 +86,6 @@ export default function SignIn() {
               <Typography component="h1" variant="h4" gutterBottom>
                 Sign In
               </Typography>
-              <Link
-                to="/"
-                style={{
-                  color: '#1565c0',
-                  textDecoration: 'none',
-                  fontSize: '0.9rem',
-                  display: 'inline-block',
-                  marginTop: '0.5rem',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.textDecoration = 'underline';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.textDecoration = 'none';
-                }}
-              >
-                ← Back to Overview
-              </Link>
             </Box>
             <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
               {error && (
@@ -123,8 +105,8 @@ export default function SignIn() {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 sx={{
-                  '& .MuiInputLabel-root': { color: '#000000' },
-                  '& .MuiInputBase-input': { color: '#000000' },
+                  '& .MuiInputLabel-root': { color: '#ffffff' },
+                  '& .MuiInputBase-input': { color: '#ffffff' },
                   '& .MuiOutlinedInput-root': {
                     '& fieldset': { borderColor: 'rgba(255,255,255,0.12)' },
                     '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.18)' },
@@ -143,8 +125,8 @@ export default function SignIn() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 sx={{
-                  '& .MuiInputLabel-root': { color: '#000000' },
-                  '& .MuiInputBase-input': { color: '#000000' },
+                  '& .MuiInputLabel-root': { color: 'rgba(255,255,255,0.9)' },
+                  '& .MuiInputBase-input': { color: '#ffffff' },
                   '& .MuiOutlinedInput-root': {
                     '& fieldset': { borderColor: 'rgba(255,255,255,0.12)' },
                     '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.18)' },
