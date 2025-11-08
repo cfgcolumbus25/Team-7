@@ -1,6 +1,7 @@
-import { useMemo, useState, useEffect, useRef } from "react";
-import { useUser } from "../contexts/UserContext.jsx";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { ResearchTileCard } from "../components/ResearchTimeline.jsx";
+import { useUser } from "../contexts/UserContext.jsx";
 
 // Animated tooltip component for achievements (scale from image)
 function Tooltip({ label, children }) {
@@ -198,6 +199,7 @@ function formatMoney(amountDisplay) {
 export default function AdminDashboard() {
   // Get user state from context
   const { user } = useUser();
+  const navigate = useNavigate();
 
   // Example data; replace with API data later
   const donations = useMemo(
@@ -462,6 +464,38 @@ export default function AdminDashboard() {
 
   return (
     <>
+      {/* Back to Overview button */}
+      <div style={{ padding: "24px 24px 0", maxWidth: "1400px", margin: "0 auto" }}>
+        <button
+          type="button"
+          onClick={() => navigate("/")}
+          style={{
+            background: "#fff",
+            border: "1px solid #e0e0e0",
+            color: "#000000",
+            padding: "10px 20px",
+            fontSize: 14,
+            fontWeight: 600,
+            borderRadius: 8,
+            cursor: "pointer",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 8,
+            transition: "all 0.2s ease",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "#f5f5f5";
+            e.currentTarget.style.borderColor = "#d0d0d0";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "#fff";
+            e.currentTarget.style.borderColor = "#e0e0e0";
+          }}
+        >
+          <span>←</span>
+          <span>Back to Overview</span>
+        </button>
+      </div>
       <div
         style={{
           minHeight: "100vh",
