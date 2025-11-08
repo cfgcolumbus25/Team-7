@@ -1,5 +1,15 @@
-import { useState } from 'react';
-import { Bar, BarChart, CartesianGrid, Cell, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { useState } from "react";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  ReferenceLine,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import ResearchTimeline from "../components/ResearchTimeline.jsx";
 import EventsThisYear from "../components/EventsThisYear.jsx";
 import ResearchMilestones from "../components/ResearchMilestones.jsx";
@@ -28,46 +38,62 @@ export default function Overview() {
 
   return (
     <div>
-      <ResearchTimeline selectedYear={selectedYear} setSelectedYear={setSelectedYear} />
-      
-      <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
-        <div style={{ 
-          backgroundColor: 'white', 
-          borderRadius: '8px', 
-          padding: '2rem', 
-          boxShadow: '0 1px 4px rgba(0, 0, 0, 0.1)',
-          marginTop: '2rem'
-        }}>
-          <h2 style={{ marginBottom: '1.5rem', fontSize: '1.5rem', fontWeight: '600' }}>
+      <ResearchTimeline
+        selectedYear={selectedYear}
+        setSelectedYear={setSelectedYear}
+      />
+
+      <div style={{ padding: "2rem", maxWidth: "1200px", margin: "0 auto" }}>
+        <div
+          style={{
+            backgroundColor: "white",
+            borderRadius: "8px",
+            padding: "2rem",
+            boxShadow: "0 1px 4px rgba(0, 0, 0, 0.1)",
+            marginTop: "2rem",
+          }}
+        >
+          <h2
+            style={{
+              marginBottom: "1.5rem",
+              fontSize: "1.5rem",
+              fontWeight: "600",
+            }}
+          >
             Yearly Fundraising
           </h2>
 
           <ResponsiveContainer width="100%" height={400}>
-            <BarChart data={FUNDRAISING_YEARS} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+            <BarChart
+              data={FUNDRAISING_YEARS}
+              margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+            >
               <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-              <XAxis 
-                dataKey="year" 
+              <XAxis
+                dataKey="year"
                 stroke="#64748b"
-                tick={{ fill: '#64748b', fontSize: 12 }}
+                tick={{ fill: "#64748b", fontSize: 12 }}
               />
-              <YAxis 
+              <YAxis
                 stroke="#64748b"
-                tick={{ fill: '#64748b', fontSize: 12 }}
+                tick={{ fill: "#64748b", fontSize: 12 }}
                 tickFormatter={formatYAxis}
               />
-              <Tooltip 
-                formatter={(value) => [`$${value.toLocaleString()}`, 'Amount']}
+              <Tooltip
+                formatter={(value) => [`$${value.toLocaleString()}`, "Amount"]}
                 contentStyle={{
-                  backgroundColor: 'white',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '6px',
-                  padding: '8px 12px'
+                  backgroundColor: "white",
+                  border: "1px solid #e2e8f0",
+                  borderRadius: "6px",
+                  padding: "8px 12px",
                 }}
               />
-              {FUNDRAISING_YEARS.some(entry => entry.year === selectedYear) && (
-                <ReferenceLine 
-                  x={selectedYear} 
-                  stroke="#1E88E5" 
+              {FUNDRAISING_YEARS.some(
+                (entry) => entry.year === selectedYear
+              ) && (
+                <ReferenceLine
+                  x={selectedYear}
+                  stroke="#1E88E5"
                   strokeDasharray="4 4"
                   strokeWidth={2}
                 />
@@ -76,8 +102,8 @@ export default function Overview() {
                 {FUNDRAISING_YEARS.map((entry) => (
                   <Cell
                     key={entry.year}
-                    fill={entry.year === selectedYear ? '#1E88E5' : '#c8dbf8'}
-                    stroke={entry.year === selectedYear ? '#1565C0' : 'none'}
+                    fill={entry.year === selectedYear ? "#1E88E5" : "#c8dbf8"}
+                    stroke={entry.year === selectedYear ? "#1565C0" : "none"}
                     strokeWidth={entry.year === selectedYear ? 2 : 0}
                   />
                 ))}
@@ -86,12 +112,14 @@ export default function Overview() {
           </ResponsiveContainer>
         </div>
         {/* Three metric cards */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-          gap: '1.5rem',
-          marginTop: '1.5rem'
-        }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+            gap: "1.5rem",
+            marginTop: "1.5rem",
+          }}
+        >
           <EventsThisYear />
           <ResearchMilestones />
           <GoalProgress2025 />
