@@ -7,6 +7,7 @@ import AdminDashboard from "./pages/AdminDashboard.jsx";
 import Donate from "./pages/Donate.jsx";
 import Overview from "./pages/Overview.jsx";
 import SignIn from "./pages/SignIn.jsx";
+import SignUp from "./pages/SignUp.jsx";
 
 function Layout() {
   return (
@@ -19,7 +20,7 @@ function Layout() {
       <main style={{ padding: 24, flex: 1 }}>
         <Outlet />
       </main>
-      
+
       <Footer />
     </div>
   );
@@ -35,6 +36,7 @@ export default function App() {
             <Route path="admin" element={<AdminDashboard />} />
             <Route path="donate" element={<Donate />} />
             <Route path="signin" element={<SignIn />} />
+            <Route path="signup" element={<SignUp />} />
           </Route>
         </Routes>
       </BrowserRouter>
