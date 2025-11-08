@@ -7,9 +7,8 @@ import {
   Typography,
 } from "@mui/material";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link as RouterLink, useNavigate } from "react-router-dom";
 import { useUser } from "../contexts/UserContext.jsx";
-import { Link as RouterLink } from "react-router-dom";
 
 // test credentials
 const TEST_USERS = {
@@ -77,8 +76,49 @@ export default function SignIn() {
         alignItems: "center",
         justifyContent: "center",
         p: 4,
+        position: "relative",
       }}
     >
+      {/* Back to Overview button */}
+      <Box
+        sx={{
+          position: "absolute",
+          top: 24,
+          left: 24,
+          zIndex: 10,
+        }}
+      >
+        <button
+          type="button"
+          onClick={() => navigate("/")}
+          style={{
+            background: "#fff",
+            border: "1px solid #e0e0e0",
+            color: "#000000",
+            padding: "10px 20px",
+            fontSize: 14,
+            fontWeight: 600,
+            borderRadius: 8,
+            cursor: "pointer",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 8,
+            transition: "all 0.2s ease",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "#f5f5f5";
+            e.currentTarget.style.borderColor = "#d0d0d0";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "#fff";
+            e.currentTarget.style.borderColor = "#e0e0e0";
+          }}
+        >
+          <span>←</span>
+          <span>Back to Overview</span>
+        </button>
+      </Box>
       {/* Border wrapper that continuously surrounds both sides */}
       <Box
         sx={{
@@ -124,14 +164,20 @@ export default function SignIn() {
                 autoFocus
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
+                InputLabelProps={{
+                  shrink: true,
+                }}
                 sx={{
-                  "& .MuiInputLabel-root": { color: "#ffffff" },
-                  "& .MuiInputBase-input": { color: "#ffffff" },
+                  "& .MuiInputLabel-root": { 
+                    color: "#000000",
+                    "&.Mui-focused": { color: "#000000" },
+                  },
+                  "& .MuiInputBase-input": { color: "#000000" },
                   "& .MuiOutlinedInput-root": {
-                    "& fieldset": { borderColor: "rgba(255,255,255,0.12)" },
-                    "&:hover fieldset": {
-                      borderColor: "rgba(255,255,255,0.18)",
-                    },
+                    backgroundColor: "#ffffff",
+                    "& fieldset": { borderColor: "#e0e0e0" },
+                    "&:hover fieldset": { borderColor: "#b0b0b0" },
+                    "&.Mui-focused fieldset": { borderColor: "#1565c0" },
                   },
                 }}
               />
@@ -146,14 +192,20 @@ export default function SignIn() {
                 autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                InputLabelProps={{
+                  shrink: true,
+                }}
                 sx={{
-                  "& .MuiInputLabel-root": { color: "rgba(255,255,255,0.9)" },
-                  "& .MuiInputBase-input": { color: "#ffffff" },
+                  "& .MuiInputLabel-root": { 
+                    color: "#000000",
+                    "&.Mui-focused": { color: "#000000" },
+                  },
+                  "& .MuiInputBase-input": { color: "#000000" },
                   "& .MuiOutlinedInput-root": {
-                    "& fieldset": { borderColor: "rgba(255,255,255,0.12)" },
-                    "&:hover fieldset": {
-                      borderColor: "rgba(255,255,255,0.18)",
-                    },
+                    backgroundColor: "#ffffff",
+                    "& fieldset": { borderColor: "#e0e0e0" },
+                    "&:hover fieldset": { borderColor: "#b0b0b0" },
+                    "&.Mui-focused fieldset": { borderColor: "#1565c0" },
                   },
                 }}
               />
