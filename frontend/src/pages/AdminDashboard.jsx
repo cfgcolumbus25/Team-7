@@ -157,10 +157,58 @@ export default function AdminDashboard() {
   // ---- Preview dialog state ----
   const [showPreview, setShowPreview] = useState(false);
   const [previewProject, setPreviewProject] = useState(null);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editedTile, setEditedTile] = useState(null);
 
   // Get user info from context
   const username = user?.username || 'user';
   const IS_ADMIN = user?.isAdmin || user?.username === 'ADMIN';
+
+  // Handler to reject tile (close preview without saving - does NOT add tile)
+  const handleRejectTile = () => {
+    setShowPreview(false);
+    setPreviewProject(null);
+    setEditedTile(null);
+    setIsEditMode(false);
+  };
+
+  // Handler to approve tile (ONLY called when user clicks "Looks Good" or "Save & Approve")
+  const handleApproveTile = () => {
+    if (!editedTile) return;
+    
+    // Save approved tile to localStorage
+    const approvedTiles = JSON.parse(localStorage.getItem('approvedResearchTiles') || '[]');
+    const tileData = {
+      id: `approved-${Date.now()}`,
+      title: editedTile.title,
+      impact: editedTile.impact,
+      money: editedTile.money,
+      summary: editedTile.summary,
+      year: editedTile.year,
+      // Store full project data for reference (with updated fields)
+      projectData: {
+        ...previewProject,
+        title: editedTile.title,
+        timeline_snippet: editedTile.impact,
+        layman_summary: editedTile.summary,
+        fund_usage: {
+          ...(previewProject?.fund_usage || {}),
+          amount_display: editedTile.money ? editedTile.money.replace(/[^0-9]/g, '') : '0',
+        },
+      },
+    };
+    approvedTiles.push(tileData);
+    localStorage.setItem('approvedResearchTiles', JSON.stringify(approvedTiles));
+    
+    // Close preview and reset state
+    setShowPreview(false);
+    setPreviewProject(null);
+    setEditedTile(null);
+    setIsEditMode(false);
+    
+    // Show success message
+    alert('Research tile approved and added to timeline!');
+  };
 
   // Set profile picture based on user role
   // Admin uses /profile.jpeg, regular users use /user-profile.jpeg
@@ -372,7 +420,17 @@ export default function AdminDashboard() {
                     // Show preview if we have projects
                     if (data.projects && data.projects.length > 0) {
                       // Use the first project for preview
-                      setPreviewProject(data.projects[0]);
+                      const project = data.projects[0];
+                      setPreviewProject(project);
+                      // Initialize edited tile with current project data
+                      setEditedTile({
+                        title: project?.title || "Untitled Project",
+                        impact: project?.timeline_snippet || project?.impact || "No timeline available",
+                        money: formatMoney(project?.fund_usage?.amount_display || project?.money || '0'),
+                        summary: project?.layman_summary || project?.summary || "No summary available",
+                        year: data?.project_year || project?.year || new Date().getFullYear(),
+                      });
+                      setIsEditMode(false);
                       setShowPreview(true);
                     }
                   } catch (err) {
@@ -444,7 +502,7 @@ export default function AdminDashboard() {
     )}
     
     {/* Preview Dialog */}
-    {showPreview && previewProject && (
+    {showPreview && previewProject && editedTile && (
       <div
         style={{
           position: 'fixed',
@@ -458,14 +516,19 @@ export default function AdminDashboard() {
           justifyContent: 'center',
           zIndex: 1000,
         }}
-        onClick={() => setShowPreview(false)}
+        onClick={(e) => {
+          // Only close on backdrop click, not on dialog content - does NOT add tile
+          if (e.target === e.currentTarget) {
+            handleRejectTile();
+          }
+        }}
       >
         <div
           style={{
             background: '#fff',
             borderRadius: 12,
             padding: 28,
-            maxWidth: 600,
+            maxWidth: 700,
             width: '90%',
             maxHeight: '90vh',
             overflow: 'auto',
@@ -473,29 +536,127 @@ export default function AdminDashboard() {
           }}
           onClick={(e) => e.stopPropagation()}
         >
-          <h3 style={{ margin: '0 0 8px', fontSize: 24, fontWeight: 800 }}>
+          <h3 style={{ margin: '0 0 8px', fontSize: 24, fontWeight: 800, color: '#000' }}>
             Review Research Tile
           </h3>
-          <p style={{ margin: '0 0 24px', color: '#6b7280', fontSize: 14 }}>
-            Please review how this will appear and confirm if it looks correct
+          <p style={{ margin: '0 0 24px', color: '#666666', fontSize: 14 }}>
+            {isEditMode ? 'Edit the tile information below, then click "Save & Approve"' : 'Please review how this will appear and confirm if it looks correct'}
           </p>
           
-          <div style={{ marginBottom: 24 }}>
-            <ResearchTileCard
-              title={previewProject.title || "Untitled Project"}
-              impact={previewProject.timeline_snippet || "No timeline available"}
-              money={formatMoney(previewProject.fund_usage?.amount_display)}
-              summary={previewProject.layman_summary || "No summary available"}
-            />
-          </div>
+          {isEditMode ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: 6, fontWeight: 600, color: '#000', fontSize: 14 }}>
+                  Title:
+                </label>
+                <input
+                  type="text"
+                  value={editedTile.title}
+                  onChange={(e) => setEditedTile({ ...editedTile, title: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    border: '1px solid #e0e0e0',
+                    borderRadius: 8,
+                    fontSize: 14,
+                    outline: 'none',
+                  }}
+                />
+              </div>
+              
+              <div>
+                <label style={{ display: 'block', marginBottom: 6, fontWeight: 600, color: '#000', fontSize: 14 }}>
+                  Impact Description:
+                </label>
+                <textarea
+                  value={editedTile.impact}
+                  onChange={(e) => setEditedTile({ ...editedTile, impact: e.target.value })}
+                  rows={3}
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    border: '1px solid #e0e0e0',
+                    borderRadius: 8,
+                    fontSize: 14,
+                    outline: 'none',
+                    resize: 'vertical',
+                  }}
+                />
+              </div>
+              
+              <div>
+                <label style={{ display: 'block', marginBottom: 6, fontWeight: 600, color: '#000', fontSize: 14 }}>
+                  Funding Amount (e.g., "$250,000"):
+                </label>
+                <input
+                  type="text"
+                  value={editedTile.money}
+                  onChange={(e) => setEditedTile({ ...editedTile, money: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    border: '1px solid #e0e0e0',
+                    borderRadius: 8,
+                    fontSize: 14,
+                    outline: 'none',
+                  }}
+                />
+              </div>
+              
+              <div>
+                <label style={{ display: 'block', marginBottom: 6, fontWeight: 600, color: '#000', fontSize: 14 }}>
+                  Summary:
+                </label>
+                <textarea
+                  value={editedTile.summary}
+                  onChange={(e) => setEditedTile({ ...editedTile, summary: e.target.value })}
+                  rows={6}
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    border: '1px solid #e0e0e0',
+                    borderRadius: 8,
+                    fontSize: 14,
+                    outline: 'none',
+                    resize: 'vertical',
+                  }}
+                />
+              </div>
+              
+              <div>
+                <label style={{ display: 'block', marginBottom: 6, fontWeight: 600, color: '#000', fontSize: 14 }}>
+                  Year:
+                </label>
+                <input
+                  type="number"
+                  value={editedTile.year}
+                  onChange={(e) => setEditedTile({ ...editedTile, year: parseInt(e.target.value) || new Date().getFullYear() })}
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    border: '1px solid #e0e0e0',
+                    borderRadius: 8,
+                    fontSize: 14,
+                    outline: 'none',
+                  }}
+                />
+              </div>
+            </div>
+          ) : (
+            <div style={{ marginBottom: 24 }}>
+              <ResearchTileCard
+                title={editedTile.title}
+                impact={editedTile.impact}
+                money={editedTile.money}
+                summary={editedTile.summary}
+              />
+            </div>
+          )}
           
-          <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', marginTop: 24 }}>
             <button
               type="button"
-              onClick={() => {
-                setShowPreview(false);
-                setPreviewProject(null);
-              }}
+              onClick={handleRejectTile}
               style={{
                 background: '#fff',
                 border: '1px solid #d1d5db',
@@ -509,29 +670,45 @@ export default function AdminDashboard() {
             >
               Not Correct
             </button>
+            {!isEditMode && (
+              <button
+                type="button"
+                onClick={() => setIsEditMode(true)}
+                style={{
+                  background: '#fff',
+                  border: '1px solid #2563eb',
+                  color: '#2563eb',
+                  padding: '10px 20px',
+                  fontSize: 14,
+                  fontWeight: 600,
+                  borderRadius: 8,
+                  cursor: 'pointer',
+                }}
+              >
+                Edit
+              </button>
+            )}
+            {isEditMode && (
+              <button
+                type="button"
+                onClick={() => setIsEditMode(false)}
+                style={{
+                  background: '#fff',
+                  border: '1px solid #d1d5db',
+                  color: '#374151',
+                  padding: '10px 20px',
+                  fontSize: 14,
+                  fontWeight: 600,
+                  borderRadius: 8,
+                  cursor: 'pointer',
+                }}
+              >
+                Cancel Edit
+              </button>
+            )}
             <button
               type="button"
-              onClick={() => {
-                // Save approved tile to localStorage
-                const approvedTiles = JSON.parse(localStorage.getItem('approvedResearchTiles') || '[]');
-                const tileData = {
-                  id: `approved-${Date.now()}`,
-                  title: previewProject.title || "Untitled Project",
-                  impact: previewProject.timeline_snippet || "No timeline available",
-                  money: formatMoney(previewProject.fund_usage?.amount_display),
-                  summary: previewProject.layman_summary || "No summary available",
-                  year: uploadResult?.project_year || new Date().getFullYear(),
-                  // Store full project data for reference
-                  projectData: previewProject,
-                };
-                approvedTiles.push(tileData);
-                localStorage.setItem('approvedResearchTiles', JSON.stringify(approvedTiles));
-                
-                setShowPreview(false);
-                setPreviewProject(null);
-                // Show success message
-                alert('Research tile approved and added to timeline!');
-              }}
+              onClick={handleApproveTile}
               style={{
                 background: '#2563eb',
                 border: 'none',
@@ -543,7 +720,7 @@ export default function AdminDashboard() {
                 cursor: 'pointer',
               }}
             >
-              Looks Good
+              {isEditMode ? 'Save & Approve' : 'Looks Good'}
             </button>
           </div>
         </div>
