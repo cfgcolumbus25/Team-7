@@ -1,17 +1,3 @@
-import { useState } from "react";
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  ReferenceLine,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
-import ResearchTimeline from "../components/ResearchTimeline.jsx";
-=======
 import { useState } from 'react';
 import { Bar, BarChart, CartesianGrid, Cell, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import EventsThisYear from "../components/EventsThisYear.jsx";
@@ -43,32 +29,6 @@ export default function Overview() {
 
   return (
     <div>
-      <ResearchTimeline
-        selectedYear={selectedYear}
-        setSelectedYear={setSelectedYear}
-      />
-
-      <div style={{ padding: "2rem", maxWidth: "1200px", margin: "0 auto" }}>
-        <div
-          style={{
-            backgroundColor: "white",
-            borderRadius: "8px",
-            padding: "2rem",
-            boxShadow: "0 1px 4px rgba(0, 0, 0, 0.1)",
-            marginTop: "2rem",
-          }}
-        >
-          <h2
-            style={{
-              marginBottom: "1.5rem",
-              fontSize: "1.5rem",
-              fontWeight: "600",
-            }}
-          >
-            Yearly Fundraising
-          </h2>
-
-=======
       <ResearchTimeline selectedYear={selectedYear} setSelectedYear={setSelectedYear} />
       
       <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
@@ -124,7 +84,6 @@ export default function Overview() {
                   strokeWidth={2}
                 />
               )}
-              {/* Bars animate bottom-up on mount */}
               <Bar
                 dataKey="amount"
                 radius={[4, 4, 0, 0]}
@@ -147,6 +106,17 @@ export default function Overview() {
         </div>
         
         <StoriesOfHope />
+        
+        <h2 style={{ 
+          fontSize: '2rem',
+          fontWeight: '700',
+          color: '#000',
+          textAlign: 'center',
+          marginTop: '2rem',
+          marginBottom: '2rem'
+        }}>
+          Foundation Highlights
+        </h2>
         
         {/* Three metric cards */}
         <div
