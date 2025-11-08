@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { Slider, Box, Typography, Card, CardContent, Button } from '@mui/material';
+import { Box, Button, Card, CardContent, Slider, Typography } from '@mui/material';
 import { styled } from '@mui/material/styles';
+import React, { useState } from 'react';
 
 // container wrapper to center everything and add some padding
 const Container = styled(Box)(({ theme }) => ({
@@ -56,19 +56,21 @@ const ResearchTile = styled(Card)(({ theme }) => ({
   },
 }));
 
-export default function ResearchTimeline() {
-  // track which year the user has selected, starting at 2012
-  const [selectedYear, setSelectedYear] = useState(2012);
+export default function ResearchTimeline({ selectedYear, setSelectedYear }) {
+  // use props if provided, otherwise use local state
+  const [localYear, setLocalYear] = useState(2012);
+  const currentYear = selectedYear !== undefined ? selectedYear : localYear;
+  const updateYear = setSelectedYear || setLocalYear;
 
   // update the selected year when user moves the slider
   const handleSliderChange = (event, newValue) => {
-    setSelectedYear(newValue);
+    updateYear(newValue);
   };
 
   // calculate the position percentage for the year label
   const min = 2012;
   const max = 2025;
-  const position = ((selectedYear - min) / (max - min)) * 100;
+  const position = ((currentYear - min) / (max - min)) * 100;
 
   // dummy data for research tiles - returns 2-3 tiles per year
   const getResearchTiles = (year) => {
@@ -81,7 +83,7 @@ export default function ResearchTimeline() {
     }));
   };
 
-  const researchTiles = getResearchTiles(selectedYear);
+  const researchTiles = getResearchTiles(currentYear);
 
   return (
     <Container>
@@ -92,7 +94,7 @@ export default function ResearchTimeline() {
       <SliderContainer>
         <SliderWrapper>
           <Slider
-            value={selectedYear}
+            value={currentYear}
             onChange={handleSliderChange}
             min={2012}
             max={2025}
@@ -100,7 +102,7 @@ export default function ResearchTimeline() {
             valueLabelDisplay="off"
           />
           <YearLabel position={position}>
-            {selectedYear}
+            {currentYear}
           </YearLabel>
         </SliderWrapper>
       </SliderContainer>
