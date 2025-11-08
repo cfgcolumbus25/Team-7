@@ -889,7 +889,7 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            {/* Recent Changes Panel - Now from Supabase */}
+            {/* Recent Changes Panel - Remove Edit Button */}
             <div
               style={{
                 background: "transparent",

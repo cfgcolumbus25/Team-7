@@ -272,6 +272,103 @@ export default function ResearchTimeline({ selectedYear, setSelectedYear }) {
 
   const selectedTile = researchTiles.find((tile) => tile.id === openTileId);
 
+  // ---- Edit tile state ----
+  const [editingTile, setEditingTile] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [savingEdit, setSavingEdit] = useState(false);
+
+  // Handler to open edit modal for a tile
+  const handleEditTile = (tile) => {
+    setEditingTile({
+      id: tile.id,
+      title: tile.title,
+      year: tile.year,
+      impact: tile.impact,
+      amount: tile.money,
+    });
+    setShowEditModal(true);
+    setOpenTileId(null); // Close the view dialog
+  };
+
+  // Handler to save edited tile to Supabase
+  const handleSaveEdit = async () => {
+    if (!editingTile) return;
+
+    setSavingEdit(true);
+    try {
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        alert('Please log in to edit research tiles');
+        return;
+      }
+
+      // Update in Supabase via backend API
+      const response = await fetch(`http://localhost:8000/api/research/update/${editingTile.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          title: editingTile.title,
+          year: editingTile.year,
+          impact: editingTile.impact,
+          money: editingTile.amount,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update research tile');
+      }
+
+      // Refresh tiles to show updated data
+      const fetchTiles = async () => {
+        const hardcodedForYear = researchData
+          .filter(tile => tile.year === currentYear)
+          .map(tile => ({
+            id: tile.id,
+            title: tile.title,
+            impact: tile.impact,
+            money: tile.money,
+            summary: tile.summary,
+            year: tile.year,
+            source: 'hardcoded'
+          }));
+        
+        const databaseData = await researchAPI.getAll();
+        const databaseForYear = databaseData
+          .filter(tile => tile.year === currentYear)
+          .map(tile => ({
+            id: tile.id,
+            title: tile.title,
+            impact: tile.impact,
+            money: tile.money,
+            summary: tile.summary,
+            year: tile.year,
+            source: 'database'
+          }));
+        
+        const allTiles = [...hardcodedForYear, ...databaseForYear];
+        const uniqueTiles = Array.from(
+          new Map(allTiles.map(tile => [tile.id, tile])).values()
+        );
+        
+        setResearchTiles(uniqueTiles);
+      };
+      
+      await fetchTiles();
+      setShowEditModal(false);
+      setEditingTile(null);
+      alert("Research tile updated successfully!");
+    } catch (error) {
+      console.error('Error updating tile:', error);
+      alert(`Failed to update tile: ${error.message}`);
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
   const YEARS = [2020, 2021, 2022, 2023, 2024, 2025];
   const minYear = YEARS[0];
   const maxYear = YEARS[YEARS.length - 1];
@@ -495,19 +592,14 @@ export default function ResearchTimeline({ selectedYear, setSelectedYear }) {
               </Typography>
             </Box>
 
-            {loadingTiles ? (
-              <Box sx={{ textAlign: 'center', py: 4 }}>
-                <Typography variant="body1" color="text.secondary">
-                  Loading research initiatives...
-                </Typography>
-              </Box>
-            ) : tilesError ? (
+            {/* Remove loading message, just show tiles or empty state */}
+            {tilesError ? (
               <Box sx={{ textAlign: 'center', py: 4 }}>
                 <Typography variant="body1" color="error">
                   Error loading research: {tilesError}
                 </Typography>
               </Box>
-            ) : researchTiles.length === 0 ? (
+            ) : researchTiles.length === 0 && !loadingTiles ? (
               <Box sx={{ textAlign: 'center', py: 4 }}>
                 <Typography variant="body1" color="text.secondary">
                   No research initiatives found for {currentYear}.
@@ -579,7 +671,7 @@ export default function ResearchTimeline({ selectedYear, setSelectedYear }) {
             )}
           </Box>
 
-          {/* Popup Dialog with glassy effect */}
+          {/* Popup Dialog - Remove Close button, keep only Edit for admins */}
           <Dialog
             open={openTileId !== null}
             onClose={handleClosePopup}
@@ -605,19 +697,25 @@ export default function ResearchTimeline({ selectedYear, setSelectedYear }) {
               }}
             >
               {selectedTile?.title}
-              <IconButton
-                aria-label="close"
-                onClick={handleClosePopup}
-                sx={{
-                  color: "rgba(0, 0, 0, 0.7)",
-                  "&:hover": {
-                    color: "#000",
-                    background: "rgba(0, 0, 0, 0.1)",
-                  },
-                }}
-              >
-                <CloseIcon />
-              </IconButton>
+              {/* Only show Edit button for admins on database tiles */}
+              {user?.isAdmin && selectedTile?.source === 'database' && (
+                <IconButton
+                  aria-label="edit"
+                  onClick={() => handleEditTile(selectedTile)}
+                  sx={{
+                    color: "#2563eb",
+                    "&:hover": {
+                      color: "#1d4ed8",
+                      background: "rgba(37, 99, 235, 0.1)",
+                    },
+                  }}
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                  </svg>
+                </IconButton>
+              )}
             </DialogTitle>
             <DialogContent
               dividers
@@ -676,6 +774,163 @@ export default function ResearchTimeline({ selectedYear, setSelectedYear }) {
           </Dialog>
         </Container>
       </div>
+
+      {/* Edit Tile Modal */}
+      {showEditModal && editingTile && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0,0,0,0.5)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1200,
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowEditModal(false);
+          }}
+        >
+          <div
+            style={{
+              background: "#fff",
+              borderRadius: 12,
+              padding: 28,
+              width: "90%",
+              maxWidth: 600,
+              maxHeight: "90vh",
+              overflow: "auto",
+              boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1),0 10px 10px -5px rgba(0,0,0,0.04)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{ margin: "0 0 8px", fontSize: 24, fontWeight: 800, color: "#000" }}>
+              Edit Research Tile
+            </h3>
+            <p style={{ margin: "0 0 24px", color: "#666", fontSize: 14 }}>
+              Update the research tile information below.
+            </p>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              <div>
+                <label style={{ display: "block", marginBottom: 6, fontWeight: 600, color: "#000", fontSize: 14 }}>
+                  Title:
+                </label>
+                <input
+                  type="text"
+                  value={editingTile.title}
+                  onChange={(e) => setEditingTile({ ...editingTile, title: e.target.value })}
+                  style={{
+                    width: "100%",
+                    padding: "10px",
+                    border: "1px solid #e0e0e0",
+                    borderRadius: 8,
+                    fontSize: 14,
+                    outline: "none",
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: "block", marginBottom: 6, fontWeight: 600, color: "#000", fontSize: 14 }}>
+                  Year:
+                </label>
+                <input
+                  type="number"
+                  value={editingTile.year}
+                  onChange={(e) => setEditingTile({ ...editingTile, year: parseInt(e.target.value) || new Date().getFullYear() })}
+                  style={{
+                    width: "100%",
+                    padding: "10px",
+                    border: "1px solid #e0e0e0",
+                    borderRadius: 8,
+                    fontSize: 14,
+                    outline: "none",
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: "block", marginBottom: 6, fontWeight: 600, color: "#000", fontSize: 14 }}>
+                  Impact:
+                </label>
+                <textarea
+                  value={editingTile.impact}
+                  onChange={(e) => setEditingTile({ ...editingTile, impact: e.target.value })}
+                  rows={3}
+                  style={{
+                    width: "100%",
+                    padding: "10px",
+                    border: "1px solid #e0e0e0",
+                    borderRadius: 8,
+                    fontSize: 14,
+                    outline: "none",
+                    resize: "vertical",
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: "block", marginBottom: 6, fontWeight: 600, color: "#000", fontSize: 14 }}>
+                  Amount:
+                </label>
+                <input
+                  type="text"
+                  value={editingTile.amount}
+                  onChange={(e) => setEditingTile({ ...editingTile, amount: e.target.value })}
+                  style={{
+                    width: "100%",
+                    padding: "10px",
+                    border: "1px solid #e0e0e0",
+                    borderRadius: 8,
+                    fontSize: 14,
+                    outline: "none",
+                  }}
+                />
+              </div>
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 12, marginTop: 24 }}>
+              <button
+                type="button"
+                onClick={() => setShowEditModal(false)}
+                style={{
+                  background: "#fff",
+                  border: "1px solid #d1d5db",
+                  color: "#374151",
+                  padding: "10px 20px",
+                  fontSize: 14,
+                  fontWeight: 600,
+                  borderRadius: 8,
+                  cursor: "pointer",
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveEdit}
+                disabled={savingEdit}
+                style={{
+                  background: savingEdit ? "#93c5fd" : "#2563eb",
+                  border: "none",
+                  color: "#fff",
+                  padding: "10px 20px",
+                  fontSize: 14,
+                  fontWeight: 600,
+                  borderRadius: 8,
+                  cursor: savingEdit ? "not-allowed" : "pointer",
+                }}
+              >
+                {savingEdit ? "Saving..." : "Save Changes"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
