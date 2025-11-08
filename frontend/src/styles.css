@@ -1,8 +1,43 @@
 body {
   margin: 0;
-  font-family: system-ui, sans-serif;
-  background: #f5f8fc;
-  color: #222;
+  font-family: 'Inter', system-ui, sans-serif;
+  background: #0a0a0f;
+  color: #ffffff;
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Animated gradient background with #133755 accents - glassy luminous effect */
+body::before {
+  content: '';
+  position: fixed;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: 
+    radial-gradient(circle at 20% 30%, rgba(19, 55, 85, 0.4) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(19, 55, 85, 0.35) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(19, 55, 85, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 10% 80%, rgba(19, 55, 85, 0.35) 0%, transparent 50%),
+    radial-gradient(circle at 60% 20%, rgba(25, 118, 210, 0.25) 0%, transparent 50%);
+  filter: blur(100px);
+  animation: gradientShift 20s ease infinite;
+  z-index: -1;
+  pointer-events: none;
+}
+
+@keyframes gradientShift {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(5%, -5%) scale(1.1);
+  }
+  66% {
+    transform: translate(-5%, 5%) scale(0.9);
+  }
 }
 
 .app {
@@ -75,16 +110,20 @@ body {
   height: 40px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.1);
-  color: white;
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  color: #fff;
   text-decoration: none;
-  transition: all 0.2s ease;
-  border: 2px solid transparent;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .social-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
-  transform: translateY(-2px);
+  background: rgba(19, 55, 85, 0.4);
+  transform: translateY(-2px) scale(1.05);
   border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 6px 20px rgba(19, 55, 85, 0.5);
 }
 
 .social-btn svg {
@@ -99,35 +138,43 @@ body {
 }
 
 .sign-in-btn {
-  background: #ffea00;
-  color: #0d47a1;
-  border: none;
+  background: linear-gradient(135deg, rgba(255, 234, 167, 0.9), rgba(255, 249, 196, 0.9));
+  color: #000;
+  border: 1px solid rgba(255, 234, 167, 0.3);
   padding: 0.6rem 1.2rem;
-  border-radius: 6px;
+  border-radius: 20px;
   cursor: pointer;
   font-weight: 600;
-  transition: opacity 0.2s, transform 0.1s;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  box-shadow: 0 4px 20px rgba(255, 234, 167, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.2) inset;
 }
 
 .sign-in-btn:hover {
-  opacity: 0.9;
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 28px rgba(255, 234, 167, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.3) inset;
+  background: linear-gradient(135deg, rgba(255, 234, 167, 1), rgba(255, 249, 196, 1));
 }
 
 .donate-btn {
-  background: #ffea00;
-  color: #0d47a1;
-  border: none;
+  background: linear-gradient(135deg, rgba(255, 234, 167, 0.9), rgba(255, 249, 196, 0.9));
+  color: #000;
+  border: 1px solid rgba(255, 234, 167, 0.3);
   padding: 0.6rem 1rem;
-  border-radius: 6px;
+  border-radius: 20px;
   cursor: pointer;
   font-weight: 600;
-  transition: opacity 0.2s, transform 0.1s;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  box-shadow: 0 4px 20px rgba(255, 234, 167, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.2) inset;
 }
 
 .donate-btn:hover {
-  opacity: 0.9;
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 28px rgba(255, 234, 167, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.3) inset;
+  background: linear-gradient(135deg, rgba(255, 234, 167, 1), rgba(255, 249, 196, 1));
 }
 
 .dashboard {
@@ -159,11 +206,15 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #1565c0;
+  background: rgba(19, 55, 85, 0.4);
+  backdrop-filter: blur(30px) saturate(180%);
+  -webkit-backdrop-filter: blur(30px) saturate(180%);
   padding: 1rem 2rem;
-  border-bottom: 1px solid #133755;
-  color: white;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fff;
   flex-wrap: wrap;
+  position: relative;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
 }
 
 .nav-bar {
@@ -171,49 +222,41 @@ body {
   justify-content: center;
   align-items: center;
   gap: 2rem;
-  background: #0d47a1;
-  border-top: 1px solid #133755;
-  border-bottom: 1px solid #133755;
   padding: 0.8rem 0;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin-top: 2rem;
 }
 
 .nav-link {
   font-size: 1.1rem;
   font-weight: 500;
   text-decoration: none;
-  color: #e3f2fd;
+  color: rgba(255, 255, 255, 0.95);
   position: relative;
-  padding-bottom: 4px;
-  transition: color 0.2s ease, transform 0.1s ease;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  transition: all 0.3s ease;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .nav-link:hover {
   color: #fff;
-  transform: translateY(-1px);
-}
-
-.nav-link::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  width: 0%;
-  height: 2px;
-  background-color: #ffea00;
-  transition: width 0.3s ease;
-}
-
-.nav-link:hover::after {
-  width: 100%;
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 4px 16px rgba(19, 55, 85, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .nav-link--active {
-  color: #ffea00;
+  color: #fff;
   font-weight: 600;
+  background: rgba(19, 55, 85, 0.5);
+  box-shadow: 0 4px 20px rgba(19, 55, 85, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.15) inset;
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.nav-link--active::after {
-  width: 100%;
-  background-color: #ffea00;
+.dashboard-textarea::placeholder {
+  color: rgba(255, 255, 255, 0.5);
 }

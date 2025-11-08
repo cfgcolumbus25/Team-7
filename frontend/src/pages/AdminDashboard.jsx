@@ -50,7 +50,7 @@ function BarChart({ width = 800, height = 360, data = [] }) {
       viewBox={`0 0 ${width} ${height}`}
       width="100%"
       height={height}
-      style={{ background: "#fff", borderRadius: 12 }}
+      style={{ background: "transparent", borderRadius: 12 }}
     >
       <g transform={`translate(${padding}, ${padding})`}>
         {/* horizontal grid */}
@@ -61,13 +61,13 @@ function BarChart({ width = 800, height = 360, data = [] }) {
             y1={gy}
             x2={innerW}
             y2={gy}
-            stroke="#e5e7eb"
+            stroke="rgba(255, 255, 255, 0.2)"
             strokeDasharray="4 4"
           />
         ))}
 
         {/* axes */}
-        <line x1={0} y1={innerH} x2={innerW} y2={innerH} stroke="#dadde3" />
+        <line x1={0} y1={innerH} x2={innerW} y2={innerH} stroke="rgba(255, 255, 255, 0.3)" />
 
         {/* bars */}
         {data.map((d, i) => {
@@ -98,7 +98,7 @@ function BarChart({ width = 800, height = 360, data = [] }) {
                 <text
                   x={x + barW * 0.35}
                   y={y - 10}
-                  fill="#111827"
+                  fill="#ffffff"
                   fontSize={14}
                   fontWeight={700}
                   textAnchor="middle"
@@ -109,7 +109,7 @@ function BarChart({ width = 800, height = 360, data = [] }) {
               <text
                 x={x + barW * 0.35}
                 y={innerH + 24}
-                fill="#6b7280"
+                fill="rgba(255, 255, 255, 0.7)"
                 fontSize={14}
                 textAnchor="middle"
               >
@@ -162,8 +162,8 @@ export default function AdminDashboard() {
     <div
       style={{
         minHeight: "100vh",
-        background: "#ffffff",
-        color: "#111827",
+        background: "transparent",
+        color: "#ffffff",
         display: "grid",
         gridTemplateColumns: "520px 1fr",
         gap: 24,
@@ -173,8 +173,8 @@ export default function AdminDashboard() {
       {/* Left: profile card */}
       <aside
         style={{
-          background: "#fff",
-          border: "1px solid #e5e7eb",
+          background: "transparent",
+          border: "1px solid rgba(255, 255, 255, 0.2)",
           borderRadius: 12,
           padding: 28,
         }}
@@ -194,13 +194,13 @@ export default function AdminDashboard() {
             }}
             style={{ borderRadius: "50%", objectFit: "cover" }}
           />
-          <h1 style={{ margin: "20px 0 0", fontSize: 32, fontWeight: 800 }}>{username}</h1>
+          <h1 style={{ margin: "20px 0 0", fontSize: 32, fontWeight: 800, color: "#ffffff" }}>{username}</h1>
         </div>
 
-        <hr style={{ margin: "24px 0", border: 0, height: 1, background: "#e5e7eb" }} />
+        <hr style={{ margin: "24px 0", border: 0, height: 1, background: "rgba(255, 255, 255, 0.2)" }} />
 
         <div>
-          <div style={{ fontWeight: 700, fontSize: 20, marginBottom: 16 }}>Achievements</div>
+          <div style={{ fontWeight: 700, fontSize: 20, marginBottom: 16, color: "#ffffff" }}>Achievements</div>
           <div style={{ display: "flex", gap: 20 }}>
             <div className="achv" style={{ position: "relative" }}>
               <Tooltip label="Board Member – Golf Charity Classic">
@@ -231,30 +231,30 @@ export default function AdminDashboard() {
       {/* Right: donations card */}
       <main
         style={{
-          background: "#fff",
-          border: "1px solid #e5e7eb",
+          background: "transparent",
+          border: "1px solid rgba(255, 255, 255, 0.2)",
           borderRadius: 12,
           padding: 28,
         }}
       >
         <div>
-          <h2 style={{ margin: 0, fontSize: 32, fontWeight: 800 }}>Donation History</h2>
-          <div style={{ color: "#6b7280", marginTop: 6 }}>Annual contributions over time</div>
+          <h2 style={{ margin: 0, fontSize: 32, fontWeight: 800, color: "#ffffff" }}>Donation History</h2>
+          <div style={{ color: "rgba(255, 255, 255, 0.7)", marginTop: 6 }}>Annual contributions over time</div>
         </div>
         <div style={{ marginTop: 18 }}>
           <BarChart data={donations} />
         </div>
 
         {/* Footer stats */}
-        <hr style={{ margin: "18px 0 18px", border: 0, height: 1, background: "#e5e7eb" }} />
+        <hr style={{ margin: "18px 0 18px", border: 0, height: 1, background: "rgba(255, 255, 255, 0.2)" }} />
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
           <div>
-            <div style={{ color: "#6b7280" }}>Total Donated</div>
-            <div style={{ fontWeight: 900, fontSize: 28 }}>{total.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</div>
+            <div style={{ color: "rgba(255, 255, 255, 0.7)" }}>Total Donated</div>
+            <div style={{ fontWeight: 900, fontSize: 28, color: "#ffffff" }}>{total.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</div>
           </div>
           <div>
-            <div style={{ color: "#6b7280" }}>Years Active</div>
-            <div style={{ fontWeight: 900, fontSize: 28 }}>{yearsActive}</div>
+            <div style={{ color: "rgba(255, 255, 255, 0.7)" }}>Years Active</div>
+            <div style={{ fontWeight: 900, fontSize: 28, color: "#ffffff" }}>{yearsActive}</div>
           </div>
         </div>
       </main>
@@ -264,8 +264,8 @@ export default function AdminDashboard() {
       <section
         style={{
           marginTop: 40,
-          background: '#ffffff',
-          borderTop: '1px solid #e5e7eb',
+          background: 'transparent',
+          borderTop: '1px solid rgba(255, 255, 255, 0.2)',
           padding: '32px 24px 80px',
         }}
       >
@@ -282,15 +282,15 @@ export default function AdminDashboard() {
           {/* Left: upload card */}
           <div
             style={{
-              background: '#fff',
-              border: '1px solid #e5e7eb',
+              background: 'transparent',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
               borderRadius: 12,
               padding: 28,
               position: 'relative',
             }}
           >
-            <h3 style={{ margin: 0, fontSize: 22, fontWeight: 800 }}>Automatically Add Research</h3>
-            <p style={{ margin: '10px 0 18px', color: '#374151', fontSize: 14 }}>
+            <h3 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#ffffff' }}>Automatically Add Research</h3>
+            <p style={{ margin: '10px 0 18px', color: 'rgba(255, 255, 255, 0.7)', fontSize: 14 }}>
               Upload a PDF or paste text to ingest and summarize research data. The structured
               summary will appear to the right.
             </p>
@@ -303,6 +303,10 @@ export default function AdminDashboard() {
                   setUploadResult(null);
                   setUploadError(null);
                 }}
+                style={{
+                  color: '#ffffff',
+                  fontSize: 14,
+                }}
               />
               <textarea
                 placeholder="Or paste raw text here..."
@@ -312,11 +316,14 @@ export default function AdminDashboard() {
                   width: '100%',
                   fontFamily: 'inherit',
                   fontSize: 14,
-                  border: '1px solid #d1d5db',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
                   borderRadius: 8,
                   padding: 10,
                   outline: 'none',
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  color: '#ffffff',
                 }}
+                className="dashboard-textarea"
                 onChange={(e) => {
                   const val = e.target.value.trim();
                   if (val) {
@@ -375,14 +382,14 @@ export default function AdminDashboard() {
                 {uploading ? 'Processing…' : 'Automatically Add Research'}
               </button>
               {uploadError && (
-                <div style={{ color: '#b91c1c', fontSize: 13 }}>{uploadError}</div>
+                <div style={{ color: '#ff6b6b', fontSize: 13 }}>{uploadError}</div>
               )}
               {!uploadError && uploadResult && (
-                <div style={{ color: '#065f46', fontSize: 13 }}>
+                <div style={{ color: '#51cf66', fontSize: 13 }}>
                   Upload complete. See parsed output to the right.
                 </div>
               )}
-              <small style={{ color: '#6b7280' }}>
+              <small style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
                 Supported: PDF (extracted text) or pasted raw text. Large files will be chunked
                 server‑side.
               </small>
@@ -391,8 +398,8 @@ export default function AdminDashboard() {
           {/* Right: placeholder for parsed output */}
           <div
             style={{
-              background: '#fff',
-              border: '1px solid #e5e7eb',
+              background: 'transparent',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
               borderRadius: 12,
               padding: 28,
               minHeight: 380,
@@ -403,15 +410,15 @@ export default function AdminDashboard() {
             }}
           >
             {!uploadResult && !uploading && (
-              <div style={{ color: '#6b7280' }}>
+              <div style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
                 Parsed research JSON will appear here after a successful upload.
               </div>
             )}
             {uploading && (
-              <div style={{ color: '#2563eb' }}>Processing upload…</div>
+              <div style={{ color: '#ffffff' }}>Processing upload…</div>
             )}
             {uploadResult && (
-              <code>{JSON.stringify(uploadResult, null, 2)}</code>
+              <code style={{ color: '#ffffff' }}>{JSON.stringify(uploadResult, null, 2)}</code>
             )}
           </div>
         </div>
