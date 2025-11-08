@@ -5,21 +5,25 @@ const HERO_STORIES = [
     quote: "The Lilabean Foundation gave us hope when we needed it most. Their support helped our family through the darkest times, and the research they fund is saving lives every day.",
     author: "Jennifer Martinez",
     role: "Parent & Advocate",
+    image: "/hero-1.jpg"
   },
   {
     quote: "Thanks to Lilabean's funding, we've made breakthrough discoveries that are already improving treatment protocols. This partnership is transforming pediatric brain cancer research.",
     author: "Dr. David Chen",
     role: "Lead Researcher, CHOP",
+    image: "/hero-2.jpg"
   },
   {
     quote: "Being part of the Lilabean community showed me that even in grief, we can create meaningful change. Together, we're making sure no family faces this journey alone.",
     author: "Michael Thompson",
     role: "Volunteer & Monthly Donor",
+    image: "/hero-3.jpg"
   },
   {
     quote: "Every dollar donated goes directly to research that matters. The transparency and impact of Lilabean's work gives us confidence that we're truly making a difference.",
     author: "Sarah Williams",
     role: "Donor & Supporter",
+    image: "/hero-4.jpg"
   },
 ];
 
@@ -162,7 +166,44 @@ export default function HeroStoryCarousel({ stories = HERO_STORIES, autoRotateIn
         </>
       )}
       
-      <div style={{ maxWidth: '48rem', position: 'relative', zIndex: 1, margin: stories.length > 1 ? '0 3rem' : '0' }}>
+      {/* Profile Photo - positioned on right side */}
+      {currentStory.image && (
+        <div style={{
+          position: 'absolute',
+          top: '2rem',
+          right: stories.length > 1 ? '4rem' : '2rem',
+          bottom: '2rem',
+          width: '220px',
+          borderRadius: '12px',
+          overflow: 'hidden',
+          border: '3px solid rgba(255, 255, 255, 0.9)',
+          boxShadow: '0 6px 20px rgba(0, 0, 0, 0.3)',
+          zIndex: 1,
+        }}>
+          <img
+            src={currentStory.image}
+            alt={currentStory.author}
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover'
+            }}
+            onError={(e) => {
+              // Hide image if it fails to load
+              e.target.style.display = 'none';
+            }}
+          />
+        </div>
+      )}
+      
+      <div style={{ 
+        maxWidth: currentStory.image ? 'none' : '48rem', 
+        position: 'relative', 
+        zIndex: 1, 
+        marginLeft: '2rem',
+        marginRight: stories.length > 1 ? '3rem' : '2rem',
+        paddingRight: currentStory.image ? '250px' : '0', // Tight gap: 220px image + 30px spacing
+      }}>
         <p style={{ 
           fontSize: '1.25rem', 
           marginBottom: '0.5rem', 
