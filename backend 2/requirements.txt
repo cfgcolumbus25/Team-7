@@ -1,0 +1,6 @@
+flask
+pydantic>=2
+pypdf
+reportlab
+pytest
+google-generativeai>=0.7.2
