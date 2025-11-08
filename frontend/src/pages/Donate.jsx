@@ -43,6 +43,7 @@ export default function Donate() {
             alignItems: "center",
             gap: 8,
             transition: "all 0.2s ease",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.background = "#f5f5f5";

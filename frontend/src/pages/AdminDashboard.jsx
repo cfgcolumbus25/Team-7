@@ -483,9 +483,9 @@ export default function AdminDashboard() {
   const tieBadge = "/black-tie.jpg";
 
   return (
-    <>
+    <div style={{ position: 'relative', width: '100%' }}>
       {/* Back to Overview button */}
-      <div style={{ position: "absolute", top: 24, left: 24, zIndex: 10 }}>
+      <div style={{ marginBottom: "16px" }}>
         <button
           type="button"
           onClick={() => navigate("/")}
@@ -502,6 +502,7 @@ export default function AdminDashboard() {
             alignItems: "center",
             gap: 8,
             transition: "all 0.2s ease",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.background = "#f5f5f5";
@@ -1449,6 +1450,6 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }

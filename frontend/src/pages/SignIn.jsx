@@ -1,6 +1,6 @@
+import { Alert, Box, Button, Container, TextField, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, TextField, Button, Typography, Container, Alert } from '@mui/material';
 import { useUser } from '../contexts/UserContext.jsx';
 
 // test credentials
@@ -58,39 +58,7 @@ export default function SignIn() {
   }, []);
   return (
     // ensure this page takes full viewport so footer sits below the fold
-    <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 4, position: 'relative' }}>
-      {/* Back to Overview button */}
-      <div style={{ position: "absolute", top: 24, left: 24, zIndex: 10 }}>
-        <button
-          type="button"
-          onClick={() => navigate("/")}
-          style={{
-            background: "#fff",
-            border: "1px solid #e0e0e0",
-            color: "#000000",
-            padding: "10px 20px",
-            fontSize: 14,
-            fontWeight: 600,
-            borderRadius: 8,
-            cursor: "pointer",
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 8,
-            transition: "all 0.2s ease",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = "#f5f5f5";
-            e.currentTarget.style.borderColor = "#d0d0d0";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = "#fff";
-            e.currentTarget.style.borderColor = "#e0e0e0";
-          }}
-        >
-          <span>←</span>
-          <span>Back to Overview</span>
-        </button>
-      </div>
+    <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 4 }}>
       {/* Border wrapper that continuously surrounds both sides */}
       <Box
         sx={{
@@ -137,8 +105,8 @@ export default function SignIn() {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 sx={{
-                  '& .MuiInputLabel-root': { color: '#000000' },
-                  '& .MuiInputBase-input': { color: '#000000' },
+                  '& .MuiInputLabel-root': { color: '#ffffff' },
+                  '& .MuiInputBase-input': { color: '#ffffff' },
                   '& .MuiOutlinedInput-root': {
                     '& fieldset': { borderColor: 'rgba(255,255,255,0.12)' },
                     '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.18)' },
@@ -157,8 +125,8 @@ export default function SignIn() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 sx={{
-                  '& .MuiInputLabel-root': { color: '#000000' },
-                  '& .MuiInputBase-input': { color: '#000000' },
+                  '& .MuiInputLabel-root': { color: 'rgba(255,255,255,0.9)' },
+                  '& .MuiInputBase-input': { color: '#ffffff' },
                   '& .MuiOutlinedInput-root': {
                     '& fieldset': { borderColor: 'rgba(255,255,255,0.12)' },
                     '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.18)' },
