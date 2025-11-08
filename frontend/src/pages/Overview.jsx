@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { Bar, BarChart, CartesianGrid, Cell, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import ResearchTimeline from "../components/ResearchTimeline.jsx";
 import EventsThisYear from "../components/EventsThisYear.jsx";
-import ResearchMilestones from "../components/ResearchMilestones.jsx";
 import GoalProgress2025 from "../components/GoalProgress2025.jsx";
+import ResearchMilestones from "../components/ResearchMilestones.jsx";
+import ResearchTimeline from "../components/ResearchTimeline.jsx";
+import StoriesOfHope from "../components/StoriesOfHope.jsx";
 
 const FUNDRAISING_YEARS = [
   { year: 2018, amount: 425000 },
@@ -31,17 +32,23 @@ export default function Overview() {
       <ResearchTimeline selectedYear={selectedYear} setSelectedYear={setSelectedYear} />
       
       <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
+        <h2 style={{ 
+          fontSize: '2rem',
+          fontWeight: '700',
+          color: '#000',
+          textAlign: 'center',
+          marginTop: '2rem',
+          marginBottom: '2rem'
+        }}>
+          Yearly Fundraising
+        </h2>
+        
         <div style={{ 
           backgroundColor: 'white', 
           borderRadius: '8px', 
           padding: '2rem', 
-          boxShadow: '0 1px 4px rgba(0, 0, 0, 0.1)',
-          marginTop: '2rem'
+          boxShadow: '0 1px 4px rgba(0, 0, 0, 0.1)'
         }}>
-          <h2 style={{ marginBottom: '1.5rem', fontSize: '1.5rem', fontWeight: '600' }}>
-            Yearly Fundraising
-          </h2>
-
           <ResponsiveContainer width="100%" height={400}>
             <BarChart data={FUNDRAISING_YEARS} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
@@ -85,6 +92,9 @@ export default function Overview() {
             </BarChart>
           </ResponsiveContainer>
         </div>
+        
+        <StoriesOfHope />
+        
         {/* Three metric cards */}
         <div style={{
           display: 'grid',

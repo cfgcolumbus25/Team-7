@@ -1,16 +1,16 @@
 import CloseIcon from '@mui/icons-material/Close';
 import {
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  IconButton,
-  Slider,
-  Typography
+    Box,
+    Button,
+    Card,
+    CardContent,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle,
+    IconButton,
+    Slider,
+    Typography
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import React, { useState } from 'react';
@@ -215,6 +215,21 @@ export default function ResearchTimeline({ selectedYear, setSelectedYear }) {
           </YearLabel>
         </SliderWrapper>
       </SliderContainer>
+
+      <Box sx={{ textAlign: 'center', marginTop: '3rem', marginBottom: '2rem' }}>
+        <Typography 
+          variant="h2" 
+          component="h2"
+          sx={{ 
+            fontSize: '2rem',
+            fontWeight: '700',
+            color: '#000',
+            margin: 0
+          }}
+        >
+          Research Initiatives
+        </Typography>
+      </Box>
 
       <TilesGrid>
         {researchTiles.map((tile) => (
