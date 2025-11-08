@@ -25,12 +25,6 @@ export default function Overview() {
 
   return (
     <div>
-      <header className="header">
-        <h1>Lilabean Foundation Dashboard</h1>
-        <div className="header-actions">
-          <button className="donate-btn">Donate</button>
-        </div>
-      </header>
       <ResearchTimeline selectedYear={selectedYear} setSelectedYear={setSelectedYear} />
       
       <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
