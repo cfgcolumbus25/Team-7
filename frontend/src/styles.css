@@ -1,171 +1,219 @@
 body {
-    margin: 0;
-    font-family: system-ui, sans-serif;
-    background: #f5f8fc;
-    /* light blue-gray background */
-    color: #222;
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  background: #f5f8fc;
+  color: #222;
 }
 
-/* Layout */
 .app {
-    display: flex;
-    min-height: 100vh;
+  display: flex;
+  min-height: 100vh;
 }
 
 .sidebar {
-    width: 200px;
-    background: #1E88E5;
-    /* blue sidebar */
-    display: flex;
-    flex-direction: column;
-    padding: 1rem;
-    border-right: 1px solid #1565C0;
-    color: white;
+  width: 200px;
+  background: #1e88e5;
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+  border-right: 1px solid #1565c0;
+  color: white;
 }
 
 .sidebar .logo {
-    font-weight: bold;
-    font-size: 1.2rem;
-    margin-bottom: 1rem;
-    color: #FFD600;
-    /* yellow accent */
+  font-weight: bold;
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+  color: #ffd600;
 }
 
 .sidebar a {
-    color: #e3f2fd;
-    text-decoration: none;
-    padding: 0.5rem 0;
-    display: block;
-    transition: color 0.2s;
+  color: #e3f2fd;
+  text-decoration: none;
+  padding: 0.5rem 0;
+  display: block;
+  transition: color 0.2s;
 }
 
 .sidebar a:hover {
-    color: #FFD600;
-    /* hover yellow */
+  color: #ffd600;
 }
 
 .main-content {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
-/* Header */
 .header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: #1565C0;
-    /* deeper blue header */
-    padding: 1rem 2rem;
-    border-bottom: 1px solid #133755;
-    color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #1565c0;
+  padding: 1rem 2rem;
+  border-bottom: 1px solid #133755;
+  color: white;
 }
 
 .header-logo h1 {
-    margin: 0;
-    font-size: 1.5rem;
-    font-weight: 600;
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
 }
 
-/* Social Media Buttons */
 .social-media-buttons {
-    display: flex;
-    gap: 1rem;
-    align-items: center;
+  display: flex;
+  gap: 1rem;
+  align-items: center;
 }
 
 .social-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
-    text-decoration: none;
-    transition: all 0.2s ease;
-    border: 2px solid transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  border: 2px solid transparent;
 }
 
 .social-btn:hover {
-    background: rgba(255, 255, 255, 0.2);
-    transform: translateY(-2px);
-    border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
 .social-btn svg {
-    width: 20px;
-    height: 20px;
+  width: 20px;
+  height: 20px;
 }
 
-/* Header Actions */
 .header-actions {
-    display: flex;
-    gap: 0.75rem;
-    align-items: center;
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
 }
 
-/* Sign In Button */
 .sign-in-btn {
-    background: #ffea00;
-    /* yellow button */
-    color: #0D47A1;
-    /* dark blue text */
-    border: none;
-    padding: 0.6rem 1.2rem;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: opacity 0.2s, transform 0.1s;
+  background: #ffea00;
+  color: #0d47a1;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: opacity 0.2s, transform 0.1s;
 }
 
 .sign-in-btn:hover {
-    opacity: 0.9;
-    transform: translateY(-1px);
+  opacity: 0.9;
+  transform: translateY(-1px);
 }
 
 .donate-btn {
-    background: #ffea00;
-    /* yellow button */
-    color: #0D47A1;
-    /* dark blue text */
-    border: none;
-    padding: 0.6rem 1rem;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: opacity 0.2s, transform 0.1s;
+  background: #ffea00;
+  color: #0d47a1;
+  border: none;
+  padding: 0.6rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: opacity 0.2s, transform 0.1s;
 }
 
 .donate-btn:hover {
-    opacity: 0.9;
-    transform: translateY(-1px);
+  opacity: 0.9;
+  transform: translateY(-1px);
 }
 
-/* Dashboard */
 .dashboard {
-    padding: 2rem;
+  padding: 2rem;
 }
 
 .cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 1rem;
-    margin-top: 1rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
 }
 
 .card {
-    background: white;
-    border-radius: 8px;
-    padding: 1rem;
-    text-align: center;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-    border-top: 4px solid #1E88E5;
-    transition: transform 0.1s;
+  background: white;
+  border-radius: 8px;
+  padding: 1rem;
+  text-align: center;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  border-top: 4px solid #1e88e5;
+  transition: transform 0.1s;
 }
 
 .card:hover {
-    transform: translateY(-2px);
+  transform: translateY(-2px);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #1565c0;
+  padding: 1rem 2rem;
+  border-bottom: 1px solid #133755;
+  color: white;
+  flex-wrap: wrap;
+}
+
+.nav-bar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 2rem;
+  background: #0d47a1;
+  border-top: 1px solid #133755;
+  border-bottom: 1px solid #133755;
+  padding: 0.8rem 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.nav-link {
+  font-size: 1.1rem;
+  font-weight: 500;
+  text-decoration: none;
+  color: #e3f2fd;
+  position: relative;
+  padding-bottom: 4px;
+  transition: color 0.2s ease, transform 0.1s ease;
+}
+
+.nav-link:hover {
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.nav-link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 0%;
+  height: 2px;
+  background-color: #ffea00;
+  transition: width 0.3s ease;
+}
+
+.nav-link:hover::after {
+  width: 100%;
+}
+
+.nav-link--active {
+  color: #ffea00;
+  font-weight: 600;
+}
+
+.nav-link--active::after {
+  width: 100%;
+  background-color: #ffea00;
 }
