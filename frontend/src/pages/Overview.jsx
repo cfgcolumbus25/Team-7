@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { Bar, BarChart, CartesianGrid, Cell, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import ResearchTimeline from "../components/ResearchTimeline.jsx";
+import EventsThisYear from "../components/EventsThisYear.jsx";
+import ResearchMilestones from "../components/ResearchMilestones.jsx";
+import GoalProgress2025 from "../components/GoalProgress2025.jsx";
 
 const FUNDRAISING_YEARS = [
   { year: 2018, amount: 425000 },
@@ -81,6 +84,17 @@ export default function Overview() {
               </Bar>
             </BarChart>
           </ResponsiveContainer>
+        </div>
+        {/* Three metric cards */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+          gap: '1.5rem',
+          marginTop: '1.5rem'
+        }}>
+          <EventsThisYear />
+          <ResearchMilestones />
+          <GoalProgress2025 />
         </div>
       </div>
     </div>
