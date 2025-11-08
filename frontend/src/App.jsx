@@ -1,6 +1,7 @@
 import { BrowserRouter, Outlet, Route, Routes } from "react-router-dom";
 import Header from "./components/header.jsx";
 import NavBar from "./components/NavBar.jsx";
+import Footer from "./components/Footer.jsx";
 import { UserProvider } from "./contexts/UserContext.jsx";
 import AdminDashboard from "./pages/AdminDashboard.jsx";
 import Donate from "./pages/Donate.jsx";
@@ -18,6 +19,8 @@ function Layout() {
       <main style={{ padding: 24, flex: 1 }}>
         <Outlet />
       </main>
+      
+      <Footer />
     </div>
   );
 }
