@@ -8,13 +8,15 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Grow,
   IconButton,
   Slider,
   Typography,
-  Grow,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
+import { useUser } from "../contexts/UserContext.jsx";
 import { researchData } from "../data/researchData.js";
 
 // container wrapper to center everything and add some padding
@@ -35,8 +37,7 @@ const SliderContainer = styled(Box)(({ theme }) => ({
 // container for the slider with relative positioning for the year label
 const SliderWrapper = styled(Box)({
   position: "relative",
-  paddingBottom: "18px", // a bit more space for the year label below
-  // hint to the browser that we'll animate these properties
+  paddingBottom: "18px", 
   willChange: "left, transform, opacity",
 });
 
@@ -44,7 +45,7 @@ const SliderWrapper = styled(Box)({
 const YearLabel = styled(Typography)(({ position }) => ({
   position: "absolute",
   bottom: "-5px",
-  left: `calc(${position}% - 20px)`, // center the label under the thumb
+  left: `calc(${position}% - 20px)`, 
   fontWeight: "bold",
   fontSize: "1.1rem",
   color: "#000",
@@ -65,7 +66,7 @@ const TilesGrid = styled(Box)(({ theme }) => ({
 }));
 
 // styled research tile card
-const ResearchTile = styled(Card)(({ theme }) => ({
+const ResearchTile = styled(Card)(() => ({
   height: "100%",
   display: "flex",
   flexDirection: "column",
@@ -84,8 +85,6 @@ function MoneyCount({ amount, duration = 1200 }) {
   const [value, setValue] = useState(0);
   const startRef = useRef(null);
   const rafRef = useRef(null);
-
-  // parse numeric value from string or number input
   const target =
     typeof amount === "number"
       ? amount
@@ -156,10 +155,15 @@ export function ResearchTileCard({ title, impact, money, summary }) {
 }
 
 export default function ResearchTimeline({ selectedYear, setSelectedYear }) {
+  const { user } = useUser();
+  const [isHovered, setIsHovered] = useState(false);
+  
   // use props if provided, otherwise use local state
   const [localYear, setLocalYear] = useState(2012);
   const currentYear = selectedYear !== undefined ? selectedYear : localYear;
   const updateYear = setSelectedYear || setLocalYear;
+  
+  const dashboardLink = user.isAuthenticated ? '/admin' : '/signin';
 
   // track which tile's popup is open (null if none)
   const [openTileId, setOpenTileId] = useState(null);
@@ -235,76 +239,148 @@ export default function ResearchTimeline({ selectedYear, setSelectedYear }) {
 
   return (
     <Container>
-      <Typography
-        variant="h4"
-        component="h2"
-        gutterBottom
+      <Box
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
         sx={{
           mb: 4,
-          fontWeight: 800,
-          fontSize: "2.5rem",
           textAlign: "center",
-          color: "#000",
         }}
       >
-        VIEW DONOR IMPACT
-      </Typography>
-
-      <SliderContainer>
-        <SliderWrapper>
-          <Slider
-            value={currentYear}
-            onChange={handleSliderChange}
-            min={2012}
-            max={2025}
-            step={1}
-            valueLabelDisplay="off"
-            sx={{
-              color: "#FFEAA7", // butter yellow
-              transition: "all 520ms cubic-bezier(0.2,0,0.2,1)",
-              "& .MuiSlider-thumb": {
-                backgroundColor: "#FFEAA7",
-                border: "2px solid rgba(255, 234, 167, 0.8)",
-                boxShadow: "0 0 10px rgba(255, 234, 167, 0.5)",
-                transition:
-                  "transform 520ms cubic-bezier(0.2,0,0.2,1), box-shadow 520ms",
-                "&:hover": {
-                  boxShadow: "0 0 15px rgba(255, 234, 167, 0.7)",
-                },
-              },
-              "& .MuiSlider-track": {
-                backgroundColor: "#FFEAA7",
-                border: "none",
-                transition: "background-color 520ms",
-              },
-              "& .MuiSlider-rail": {
-                backgroundColor: "rgba(255, 234, 167, 0.3)",
-                transition: "background-color 520ms",
-              },
-            }}
-          />
-          <YearLabel position={position}>{currentYear}</YearLabel>
-        </SliderWrapper>
-      </SliderContainer>
-
-      <Box
-        sx={{ textAlign: "center", marginTop: "3rem", marginBottom: "2rem" }}
-      >
         <Typography
-          variant="h2"
+          variant="h4"
           component="h2"
+          gutterBottom
           sx={{
-            fontSize: "2rem",
-            fontWeight: "700",
+            fontWeight: 800,
+            fontSize: "2.5rem",
+            textAlign: "center",
             color: "#000",
-            margin: 0,
           }}
         >
-          Research Initiatives
-        </Typography>
+          VIEW{" "}
+          {isHovered ? (
+            <Link
+              to={dashboardLink}
+              style={{
+                color: "#1565c0",
+                textDecoration: "none",
+                cursor: "pointer",
+                padding: "4px 12px",
+                borderRadius: "8px",
+                backgroundColor: "rgba(21, 101, 192, 0.1)",
+                border: "2px solid #1565c0",
+                transition: "all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)",
+                display: "inline-block",
+                fontWeight: 800,
+                position: "relative",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "rgba(21, 101, 192, 0.2)";
+                e.currentTarget.style.transform = "scale(1.15) translateY(-2px)";
+                e.currentTarget.style.boxShadow = "0 6px 20px rgba(21, 101, 192, 0.4)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "rgba(21, 101, 192, 0.1)";
+                e.currentTarget.style.transform = "scale(1) translateY(0)";
+                e.currentTarget.style.boxShadow = "none";
+              }}
+            >
+              YOUR
+            </Link>
+          ) : (
+            <span
+              style={{
+                color: "#1565c0",
+                padding: "4px 12px",
+                borderRadius: "8px",
+                backgroundColor: "rgba(21, 101, 192, 0.1)",
+                border: "2px solid #1565c0",
+                display: "inline-block",
+                fontWeight: 800,
+              }}
+            >
+              DONOR
+            </span>
+          )}{" "}
+          IMPACT
+      </Typography>
       </Box>
 
-      <TilesGrid>
+      <Box
+        sx={{
+          backgroundColor: "white",
+          borderRadius: "8px",
+          padding: "2rem",
+          boxShadow: "0 1px 4px rgba(0, 0, 0, 0.1)",
+          marginTop: "2rem",
+        }}
+      >
+      <SliderContainer>
+          <SliderWrapper>
+        <Slider
+              value={currentYear}
+          onChange={handleSliderChange}
+          min={2012}
+          max={2025}
+          step={1}
+              valueLabelDisplay="off"
+              sx={{
+                color: "#FFEAA7", // butter yellow
+                transition: "all 520ms cubic-bezier(0.2,0,0.2,1)",
+                "& .MuiSlider-thumb": {
+                  backgroundColor: "#FFEAA7",
+                  border: "2px solid rgba(255, 234, 167, 0.8)",
+                  boxShadow: "0 0 10px rgba(255, 234, 167, 0.5)",
+                  transition:
+                    "transform 520ms cubic-bezier(0.2,0,0.2,1), box-shadow 520ms",
+                  "&:hover": {
+                    boxShadow: "0 0 15px rgba(255, 234, 167, 0.7)",
+                  },
+                },
+                "& .MuiSlider-track": {
+                  backgroundColor: "#FFEAA7",
+                  border: "none",
+                  transition: "background-color 520ms",
+                },
+                "& .MuiSlider-rail": {
+                  backgroundColor: "rgba(255, 234, 167, 0.3)",
+                  transition: "background-color 520ms",
+                },
+              }}
+            />
+            <YearLabel position={position}>{currentYear}</YearLabel>
+          </SliderWrapper>
+      </SliderContainer>
+      </Box>
+
+      <Box
+        sx={{
+          backgroundColor: "white",
+          borderRadius: "8px",
+          padding: "2rem",
+          boxShadow: "0 1px 4px rgba(0, 0, 0, 0.1)",
+          marginTop: "2rem",
+        }}
+      >
+        <Box
+          sx={{ textAlign: "center", marginTop: "0", marginBottom: "2rem" }}
+        >
+          <Typography
+            variant="h2"
+            component="h2"
+            sx={{
+              fontSize: "2rem",
+              fontWeight: "700",
+              color: "#000",
+              margin: 0,
+            }}
+          >
+            Research Initiatives
+          </Typography>
+        </Box>
+
+        <TilesGrid>
         {researchTiles.map((tile, idx) => (
           <Grow
             key={tile.id}
@@ -365,7 +441,8 @@ export default function ResearchTimeline({ selectedYear, setSelectedYear }) {
             </div>
           </Grow>
         ))}
-      </TilesGrid>
+        </TilesGrid>
+      </Box>
 
       {/* Popup Dialog with glassy effect */}
       <Dialog

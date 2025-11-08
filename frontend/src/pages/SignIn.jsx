@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Box, TextField, Button, Typography, Container, Alert } from '@mui/material';
 import { useUser } from '../contexts/UserContext.jsx';
 
@@ -86,6 +86,24 @@ export default function SignIn() {
               <Typography component="h1" variant="h4" gutterBottom>
                 Sign In
               </Typography>
+              <Link
+                to="/"
+                style={{
+                  color: '#1565c0',
+                  textDecoration: 'none',
+                  fontSize: '0.9rem',
+                  display: 'inline-block',
+                  marginTop: '0.5rem',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.textDecoration = 'underline';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.textDecoration = 'none';
+                }}
+              >
+                ← Back to Overview
+              </Link>
             </Box>
             <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
               {error && (
