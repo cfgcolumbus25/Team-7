@@ -14,6 +14,7 @@ import {
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import React, { useState } from 'react';
+import { researchData } from '../data/researchData.js';
 
 
 // container wrapper to center everything and add some padding
@@ -126,18 +127,20 @@ export default function ResearchTimeline({ selectedYear, setSelectedYear }) {
     setOpenTileId(null);
   };
 
-  // dummy data for research tiles - returns 2-3 tiles per year
+  // Get research tiles for a specific year from real data
   const getResearchTiles = (year) => {
-    const tileCount = 2 + (year % 2); // 2 or 3 tiles
-    const dummyTiles = Array.from({ length: tileCount }, (_, index) => ({
-      id: `${year}-${index + 1}`,
-      title: `Research Project ${index + 1}`,
-      impact: `Impact description for ${year}`,
-      money: `$${(Math.random() * 500000 + 100000).toFixed(0)}`,
-      summary: `This research project conducted in ${year} has made significant contributions to the field. The project focused on advancing our understanding of key research areas and has resulted in measurable improvements. Through dedicated funding and collaborative efforts, we were able to achieve breakthrough results that will benefit the community for years to come.`,
-    }));
+    // Filter real research data by year
+    const realTilesForYear = researchData
+      .filter(tile => tile.year === year)
+      .map(tile => ({
+        id: tile.id,
+        title: tile.title,
+        impact: tile.impact,
+        money: tile.money,
+        summary: tile.summary,
+      }));
     
-    // Get approved tiles from localStorage
+    // Get approved tiles from localStorage (for any manually added projects)
     const approvedTiles = JSON.parse(localStorage.getItem('approvedResearchTiles') || '[]');
     const approvedForYear = approvedTiles
       .filter(tile => tile.year === year)
@@ -149,8 +152,14 @@ export default function ResearchTimeline({ selectedYear, setSelectedYear }) {
         summary: tile.summary,
       }));
     
-    // Combine approved tiles with dummy tiles
-    return [...approvedForYear, ...dummyTiles];
+    // Combine real data with approved tiles (approved tiles take precedence if same ID)
+    const allTiles = [...realTilesForYear, ...approvedForYear];
+    // Remove duplicates by ID (keep approved tiles if duplicate)
+    const uniqueTiles = Array.from(
+      new Map(allTiles.map(tile => [tile.id, tile])).values()
+    );
+    
+    return uniqueTiles;
   };
 
   const researchTiles = getResearchTiles(currentYear);
