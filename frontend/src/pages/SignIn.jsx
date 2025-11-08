@@ -9,6 +9,7 @@ import {
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../contexts/UserContext.jsx";
+import { Link as RouterLink } from "react-router-dom";
 
 // test credentials
 const TEST_USERS = {
