@@ -108,7 +108,9 @@ export default function Header() {
       </div>
 
       <div className="header-actions">
-        <button className="donate-btn">Donate</button>
+        <Link to="/donate" style={{ textDecoration: 'none' }}>
+          <button className="donate-btn">Donate</button>
+        </Link>
         {user.isAuthenticated ? (
           <button className="sign-in-btn" onClick={handleSignOut}>
             Sign Out
