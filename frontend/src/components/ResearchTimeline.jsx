@@ -157,6 +157,7 @@ export function ResearchTileCard({ title, impact, money, summary }) {
 export default function ResearchTimeline({ selectedYear, setSelectedYear }) {
   const { user } = useUser();
   const [isHovered, setIsHovered] = useState(false);
+  const [hoveredYear, setHoveredYear] = useState(null);
   
   // use props if provided, otherwise use local state
   const [localYear, setLocalYear] = useState(2012);
@@ -237,308 +238,390 @@ export default function ResearchTimeline({ selectedYear, setSelectedYear }) {
   const researchTiles = getResearchTiles(currentYear);
   const selectedTile = researchTiles.find((tile) => tile.id === openTileId);
 
+  const YEARS = [2020, 2021, 2022, 2023, 2024, 2025];
+  const minYear = YEARS[0];
+  const maxYear = YEARS[YEARS.length - 1];
+
   return (
-    <Container>
-      <Box
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-        sx={{
-          mb: 4,
-          textAlign: "center",
-        }}
-      >
-        <Typography
-          variant="h4"
-          component="h2"
-          gutterBottom
-          sx={{
-            fontWeight: 800,
-            fontSize: "2.5rem",
-            textAlign: "center",
-            color: "#000",
-          }}
-        >
-          VIEW{" "}
-          {isHovered ? (
-            <Link
-              to={dashboardLink}
-              style={{
-                color: "#1565c0",
-                textDecoration: "none",
-                cursor: "pointer",
-                padding: "4px 12px",
-                borderRadius: "8px",
-                backgroundColor: "rgba(21, 101, 192, 0.1)",
-                border: "2px solid #1565c0",
-                transition: "all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)",
-                display: "inline-block",
-                fontWeight: 800,
-                position: "relative",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "rgba(21, 101, 192, 0.2)";
-                e.currentTarget.style.transform = "scale(1.15) translateY(-2px)";
-                e.currentTarget.style.boxShadow = "0 6px 20px rgba(21, 101, 192, 0.4)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "rgba(21, 101, 192, 0.1)";
-                e.currentTarget.style.transform = "scale(1) translateY(0)";
-                e.currentTarget.style.boxShadow = "none";
-              }}
-            >
-              YOUR
-            </Link>
-          ) : (
-            <span
-              style={{
-                color: "#1565c0",
-                padding: "4px 12px",
-                borderRadius: "8px",
-                backgroundColor: "rgba(21, 101, 192, 0.1)",
-                border: "2px solid #1565c0",
-                display: "inline-block",
-                fontWeight: 800,
-              }}
-            >
-              DONOR
-            </span>
-          )}{" "}
-          IMPACT
-      </Typography>
-      </Box>
-
-      <Box
-        sx={{
-          backgroundColor: "white",
-          borderRadius: "8px",
-          padding: "2rem",
-          boxShadow: "0 1px 4px rgba(0, 0, 0, 0.1)",
-          marginTop: "2rem",
-        }}
-      >
-      <SliderContainer>
-          <SliderWrapper>
-        <Slider
-              value={currentYear}
-          onChange={handleSliderChange}
-          min={2012}
-          max={2025}
-          step={1}
-              valueLabelDisplay="off"
-              sx={{
-                color: "#FFEAA7", // butter yellow
-                transition: "all 520ms cubic-bezier(0.2,0,0.2,1)",
-                "& .MuiSlider-thumb": {
-                  backgroundColor: "#FFEAA7",
-                  border: "2px solid rgba(255, 234, 167, 0.8)",
-                  boxShadow: "0 0 10px rgba(255, 234, 167, 0.5)",
-                  transition:
-                    "transform 520ms cubic-bezier(0.2,0,0.2,1), box-shadow 520ms",
-                  "&:hover": {
-                    boxShadow: "0 0 15px rgba(255, 234, 167, 0.7)",
-                  },
-                },
-                "& .MuiSlider-track": {
-                  backgroundColor: "#FFEAA7",
-                  border: "none",
-                  transition: "background-color 520ms",
-                },
-                "& .MuiSlider-rail": {
-                  backgroundColor: "rgba(255, 234, 167, 0.3)",
-                  transition: "background-color 520ms",
-                },
-              }}
-            />
-            <YearLabel position={position}>{currentYear}</YearLabel>
-          </SliderWrapper>
-      </SliderContainer>
-      </Box>
-
-      <Box
-        sx={{
-          backgroundColor: "white",
-          borderRadius: "8px",
-          padding: "2rem",
-          boxShadow: "0 1px 4px rgba(0, 0, 0, 0.1)",
-          marginTop: "2rem",
-        }}
-      >
+    <div style={{ background: "white", padding: "3rem 1.5rem" }}>
+      <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
+        {/* VIEW DONOR IMPACT */}
         <Box
-          sx={{ textAlign: "center", marginTop: "0", marginBottom: "2rem" }}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+          sx={{ mb: 6, textAlign: "center" }}
         >
           <Typography
-            variant="h2"
+            variant="h4"
             component="h2"
+            gutterBottom
             sx={{
-              fontSize: "2rem",
-              fontWeight: "700",
+              fontWeight: 800,
+              fontSize: "2.5rem",
+              textAlign: "center",
               color: "#000",
-              margin: 0,
             }}
           >
-            Research Initiatives
+            VIEW{" "}
+            {isHovered ? (
+              <Link
+                to={dashboardLink}
+                style={{
+                  color: "#1565c0",
+                  textDecoration: "none",
+                  cursor: "pointer",
+                  padding: "4px 12px",
+                  borderRadius: "8px",
+                  backgroundColor: "rgba(21, 101, 192, 0.1)",
+                  border: "2px solid #1565c0",
+                  transition: "all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)",
+                  display: "inline-block",
+                  fontWeight: 800,
+                  position: "relative",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = "rgba(21, 101, 192, 0.2)";
+                  e.currentTarget.style.transform = "scale(1.15) translateY(-2px)";
+                  e.currentTarget.style.boxShadow = "0 6px 20px rgba(21, 101, 192, 0.4)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "rgba(21, 101, 192, 0.1)";
+                  e.currentTarget.style.transform = "scale(1) translateY(0)";
+                  e.currentTarget.style.boxShadow = "none";
+                }}
+              >
+                YOUR
+              </Link>
+            ) : (
+              <span
+                style={{
+                  color: "#1565c0",
+                  padding: "4px 12px",
+                  borderRadius: "8px",
+                  backgroundColor: "rgba(21, 101, 192, 0.1)",
+                  border: "2px solid #1565c0",
+                  display: "inline-block",
+                  fontWeight: 800,
+                }}
+              >
+                DONOR
+              </span>
+            )}{" "}
+            IMPACT
           </Typography>
         </Box>
 
-        <TilesGrid>
-        {researchTiles.map((tile, idx) => (
-          <Grow
-            key={tile.id}
-            in={showTiles}
+        {/* Timeline Slider - Add hover effects */}
+        <div style={{ position: "relative", margin: "5rem 0", padding: "0 2rem" }}>
+          {/* Timeline track with arrows */}
+          <div
             style={{
-              transformOrigin: "0 0 0",
-              transitionDelay: `${idx * 90}ms`,
+              position: "relative",
+              height: "8px",
+              background: "linear-gradient(90deg, #e0e7ff 0%, #1e40af 100%)",
+              borderRadius: "4px",
+              marginBottom: "2rem",
             }}
-            timeout={500 + idx * 90}
           >
-            <div>
-              <ResearchTile>
-                <CardContent sx={{ flexGrow: 1 }}>
-                  <Typography
-                    variant="h6"
-                    component="h3"
-                    gutterBottom
-                    sx={{ fontWeight: "bold", color: "#000" }}
-                  >
-                    {tile.title}
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    sx={{ mb: 2, color: "rgba(0, 0, 0, 0.7)" }}
-                  >
-                    {tile.impact}
-                  </Typography>
-                  <Typography
-                    variant="h6"
-                    sx={{ mb: 2, fontWeight: "bold", color: "#000" }}
-                  >
-                    <MoneyCount
-                      amount={tile.money}
-                      duration={1000 + idx * 80}
-                    />
-                  </Typography>
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    fullWidth
-                    onClick={() => handleOpenPopup(tile.id)}
-                    sx={{
-                      background: "#FFEAA7",
-                      border: "none",
-                      color: "#000",
-                      borderRadius: "20px",
-                      fontWeight: 600,
-                      "&:hover": {
-                        background: "#FFEAA7",
-                        opacity: 0.9,
-                      },
+            {/* Left arrow */}
+            <div
+              style={{
+                position: "absolute",
+                left: "-16px",
+                top: "50%",
+                transform: "translateY(-50%)",
+                width: 0,
+                height: 0,
+                borderTop: "8px solid transparent",
+                borderBottom: "8px solid transparent",
+                borderRight: "12px solid #e0e7ff",
+              }}
+            />
+            {/* Right arrow */}
+            <div
+              style={{
+                position: "absolute",
+                right: "-16px",
+                top: "50%",
+                transform: "translateY(-50%)",
+                width: 0,
+                height: 0,
+                borderTop: "8px solid transparent",
+                borderBottom: "8px solid transparent",
+                borderLeft: "12px solid #1e40af",
+              }}
+            />
+
+            {/* Year markers on the timeline */}
+            {YEARS.map((year, idx) => {
+              const position = (idx / (YEARS.length - 1)) * 100;
+              const isSelected = year === selectedYear;
+              const isHovered = hoveredYear === year;
+              
+              return (
+                <div
+                  key={year}
+                  style={{
+                    position: "absolute",
+                    left: `${position}%`,
+                    top: "50%",
+                    transform: "translate(-50%, -50%)",
+                    cursor: "pointer",
+                    zIndex: isSelected ? 10 : isHovered ? 8 : 5,
+                  }}
+                  onClick={() => setSelectedYear(year)}
+                  onMouseEnter={() => setHoveredYear(year)}
+                  onMouseLeave={() => setHoveredYear(null)}
+                >
+                  {/* Marker dot */}
+                  <div
+                    style={{
+                      width: isSelected ? "20px" : isHovered ? "18px" : "14px",
+                      height: isSelected ? "20px" : isHovered ? "18px" : "14px",
+                      borderRadius: "50%",
+                      background: isSelected ? "#1e40af" : isHovered ? "#3b82f6" : "white",
+                      border: `3px solid ${isSelected ? "#1e40af" : isHovered ? "#3b82f6" : "#94a3b8"}`,
+                      transition: "all 0.3s ease",
+                      boxShadow: isSelected
+                        ? "0 4px 12px rgba(30, 64, 175, 0.4)"
+                        : isHovered
+                        ? "0 3px 8px rgba(59, 130, 246, 0.3)"
+                        : "0 2px 4px rgba(0,0,0,0.1)",
+                    }}
+                  />
+                  
+                  {/* Year label */}
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "32px",
+                      left: "50%",
+                      transform: "translateX(-50%)",
+                      fontSize: isSelected ? "16px" : isHovered ? "15px" : "14px",
+                      fontWeight: isSelected ? "700" : isHovered ? "650" : "600",
+                      color: isSelected ? "#1e40af" : isHovered ? "#3b82f6" : "#64748b",
+                      whiteSpace: "nowrap",
+                      transition: "all 0.3s ease",
                     }}
                   >
-                    View More
-                  </Button>
-                </CardContent>
-              </ResearchTile>
-            </div>
-          </Grow>
-        ))}
-        </TilesGrid>
-      </Box>
+                    {year}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
 
-      {/* Popup Dialog with glassy effect */}
-      <Dialog
-        open={openTileId !== null}
-        onClose={handleClosePopup}
-        maxWidth="sm"
-        fullWidth
-        PaperProps={{
-          sx: {
-            background: "#ffffff",
-            border: "1px solid #e0e0e0",
-            borderRadius: "12px",
-            boxShadow: "0 4px 16px rgba(0, 0, 0, 0.15)",
-          },
-        }}
-      >
-        <DialogTitle
-          sx={{
-            m: 0,
-            p: 2,
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            color: "#000",
-          }}
-        >
-          {selectedTile?.title}
-          <IconButton
-            aria-label="close"
-            onClick={handleClosePopup}
+          {/* Hidden range input for accessibility */}
+          <input
+            type="range"
+            min={minYear}
+            max={maxYear}
+            step={1}
+            value={selectedYear}
+            onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+            style={{
+              position: "absolute",
+              top: 0,
+              left: "2rem",
+              right: "2rem",
+              width: "calc(100% - 4rem)",
+              opacity: 0,
+              cursor: "pointer",
+              height: "40px",
+            }}
+            aria-label="Select year"
+          />
+        </div>
+
+        {/* Research tiles display */}
+        <Container>
+          <Box
             sx={{
-              color: "rgba(0, 0, 0, 0.7)",
-              "&:hover": {
+              backgroundColor: "white",
+              borderRadius: "8px",
+              padding: "2rem",
+              boxShadow: "0 1px 4px rgba(0, 0, 0, 0.1)",
+              marginTop: "2rem",
+            }}
+          >
+            <Box
+              sx={{ textAlign: "center", marginTop: "0", marginBottom: "2rem" }}
+            >
+              <Typography
+                variant="h2"
+                component="h2"
+                sx={{
+                  fontSize: "2rem",
+                  fontWeight: "700",
+                  color: "#000",
+                  margin: 0,
+                }}
+              >
+                Research Initiatives
+              </Typography>
+            </Box>
+
+            <TilesGrid>
+              {researchTiles.map((tile, idx) => (
+                <Grow
+                  key={tile.id}
+                  in={showTiles}
+                  style={{
+                    transformOrigin: "0 0 0",
+                    transitionDelay: `${idx * 90}ms`,
+                  }}
+                  timeout={500 + idx * 90}
+                >
+                  <div>
+                    <ResearchTile>
+                      <CardContent sx={{ flexGrow: 1 }}>
+                        <Typography
+                          variant="h6"
+                          component="h3"
+                          gutterBottom
+                          sx={{ fontWeight: "bold", color: "#000" }}
+                        >
+                          {tile.title}
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          sx={{ mb: 2, color: "rgba(0, 0, 0, 0.7)" }}
+                        >
+                          {tile.impact}
+                        </Typography>
+                        <Typography
+                          variant="h6"
+                          sx={{ mb: 2, fontWeight: "bold", color: "#000" }}
+                        >
+                          <MoneyCount
+                            amount={tile.money}
+                            duration={1000 + idx * 80}
+                          />
+                        </Typography>
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          fullWidth
+                          onClick={() => handleOpenPopup(tile.id)}
+                          sx={{
+                            background: "#FFEAA7",
+                            border: "none",
+                            color: "#000",
+                            borderRadius: "20px",
+                            fontWeight: 600,
+                            "&:hover": {
+                              background: "#FFEAA7",
+                              opacity: 0.9,
+                            },
+                          }}
+                        >
+                          View More
+                        </Button>
+                      </CardContent>
+                    </ResearchTile>
+                  </div>
+                </Grow>
+              ))}
+            </TilesGrid>
+          </Box>
+
+          {/* Popup Dialog with glassy effect */}
+          <Dialog
+            open={openTileId !== null}
+            onClose={handleClosePopup}
+            maxWidth="sm"
+            fullWidth
+            PaperProps={{
+              sx: {
+                background: "#ffffff",
+                border: "1px solid #e0e0e0",
+                borderRadius: "12px",
+                boxShadow: "0 4px 16px rgba(0, 0, 0, 0.15)",
+              },
+            }}
+          >
+            <DialogTitle
+              sx={{
+                m: 0,
+                p: 2,
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
                 color: "#000",
-                background: "rgba(0, 0, 0, 0.1)",
-              },
-            }}
-          >
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent
-          dividers
-          sx={{ color: "#000", borderColor: "rgba(0, 0, 0, 0.1)" }}
-        >
-          <Typography
-            variant="body1"
-            paragraph
-            sx={{ color: "rgba(0, 0, 0, 0.9)" }}
-          >
-            {selectedTile?.summary}
-          </Typography>
-          <Box sx={{ mt: 2 }}>
-            <Typography
-              variant="subtitle2"
-              sx={{ color: "rgba(0, 0, 0, 0.7)" }}
-              gutterBottom
+              }}
             >
-              Funding Amount:
-            </Typography>
-            <Typography variant="h6" sx={{ fontWeight: "bold", color: "#000" }}>
-              <MoneyCount amount={selectedTile?.money || 0} duration={900} />
-            </Typography>
-          </Box>
-          <Box sx={{ mt: 2 }}>
-            <Typography
-              variant="subtitle2"
-              sx={{ color: "rgba(0, 0, 0, 0.7)" }}
-              gutterBottom
+              {selectedTile?.title}
+              <IconButton
+                aria-label="close"
+                onClick={handleClosePopup}
+                sx={{
+                  color: "rgba(0, 0, 0, 0.7)",
+                  "&:hover": {
+                    color: "#000",
+                    background: "rgba(0, 0, 0, 0.1)",
+                  },
+                }}
+              >
+                <CloseIcon />
+              </IconButton>
+            </DialogTitle>
+            <DialogContent
+              dividers
+              sx={{ color: "#000", borderColor: "rgba(0, 0, 0, 0.1)" }}
             >
-              Impact:
-            </Typography>
-            <Typography variant="body2" sx={{ color: "rgba(0, 0, 0, 0.9)" }}>
-              {selectedTile?.impact}
-            </Typography>
-          </Box>
-        </DialogContent>
-        <DialogActions sx={{ p: 2, borderTop: "1px solid rgba(0, 0, 0, 0.1)" }}>
-          <Button
-            onClick={handleClosePopup}
-            sx={{
-              background: "#FFEAA7",
-              border: "none",
-              color: "#000",
-              borderRadius: "20px",
-              fontWeight: 600,
-              "&:hover": {
-                background: "#FFEAA7",
-                opacity: 0.9,
-              },
-            }}
-          >
-            Close
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Container>
+              <Typography
+                variant="body1"
+                paragraph
+                sx={{ color: "rgba(0, 0, 0, 0.9)" }}
+              >
+                {selectedTile?.summary}
+              </Typography>
+              <Box sx={{ mt: 2 }}>
+                <Typography
+                  variant="subtitle2"
+                  sx={{ color: "rgba(0, 0, 0, 0.7)" }}
+                  gutterBottom
+                >
+                  Funding Amount:
+                </Typography>
+                <Typography variant="h6" sx={{ fontWeight: "bold", color: "#000" }}>
+                  <MoneyCount amount={selectedTile?.money || 0} duration={900} />
+                </Typography>
+              </Box>
+              <Box sx={{ mt: 2 }}>
+                <Typography
+                  variant="subtitle2"
+                  sx={{ color: "rgba(0, 0, 0, 0.7)" }}
+                  gutterBottom
+                >
+                  Impact:
+                </Typography>
+                <Typography variant="body2" sx={{ color: "rgba(0, 0, 0, 0.9)" }}>
+                  {selectedTile?.impact}
+                </Typography>
+              </Box>
+            </DialogContent>
+            <DialogActions sx={{ p: 2, borderTop: "1px solid rgba(0, 0, 0, 0.1)" }}>
+              <Button
+                onClick={handleClosePopup}
+                sx={{
+                  background: "#FFEAA7",
+                  border: "none",
+                  color: "#000",
+                  borderRadius: "20px",
+                  fontWeight: 600,
+                  "&:hover": {
+                    background: "#FFEAA7",
+                    opacity: 0.9,
+                  },
+                }}
+              >
+                Close
+              </Button>
+            </DialogActions>
+          </Dialog>
+        </Container>
+      </div>
+    </div>
   );
 }
