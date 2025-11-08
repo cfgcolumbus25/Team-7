@@ -98,7 +98,15 @@ export default function Overview() {
                   strokeWidth={2}
                 />
               )}
-              <Bar dataKey="amount" radius={[4, 4, 0, 0]}>
+              {/* Bars animate bottom-up on mount */}
+              <Bar
+                dataKey="amount"
+                radius={[4, 4, 0, 0]}
+                isAnimationActive={true}
+                animationBegin={80}
+                animationDuration={1200}
+                animationEasing="ease"
+              >
                 {FUNDRAISING_YEARS.map((entry) => (
                   <Cell
                     key={entry.year}
