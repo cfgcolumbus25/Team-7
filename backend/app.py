@@ -444,5 +444,49 @@ def ingest_and_summarize():
 def health():
     return jsonify({"ok": True, "time": datetime.utcnow().isoformat()})
 
+@app.route("/generate-email", methods=["POST", "OPTIONS"])
+def generate_email():
+    """
+    Generate an AI-powered email from research changes.
+    
+    Request JSON:
+        {
+            "changes": [
+                {
+                    "id": "approved-123",
+                    "type": "research_tile_added",
+                    "title": "Project Title",
+                    "year": 2024,
+                    "amount": "$250,000",
+                    "impact": "Brief impact description",
+                    "timestamp": 1234567890
+                }
+            ]
+        }
+    
+    Returns:
+        {
+            "subject": "Email subject line",
+            "body": "Full email body text"
+        }
+    """
+    if request.method == "OPTIONS":
+        return ("", 204)
+    
+    try:
+        from email_generator import generate_research_email
+        
+        data = request.get_json(silent=True) or {}
+        changes = data.get("changes", [])
+        
+        if not changes:
+            return jsonify({"error": "No changes provided"}), 400
+        
+        result = generate_research_email(changes)
+        return jsonify(result), 200
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", "8000")), debug=True)

@@ -264,10 +264,80 @@ export default function AdminDashboard() {
   const [previewProject, setPreviewProject] = useState(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editedTile, setEditedTile] = useState(null);
+  // ---- Change tracking & email preview state ----
+  const [showChangesModal, setShowChangesModal] = useState(false);
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [emailContent, setEmailContent] = useState({ subject: '', body: '' });
+  const [generatingEmail, setGeneratingEmail] = useState(false);
+  const [emailError, setEmailError] = useState(null);
+
+  // Helpers for change tracking in localStorage
+  const CHANGE_LOG_KEY = 'adminChangeLog';
+  const PUBLISH_TS_KEY = 'adminLastPublishTs';
+
+  const getPublishTs = () => {
+    const ts = parseInt(localStorage.getItem(PUBLISH_TS_KEY) || '0', 10);
+    return isNaN(ts) ? 0 : ts;
+  };
+  const getChangeLog = () => {
+    try {
+      return JSON.parse(localStorage.getItem(CHANGE_LOG_KEY) || '[]');
+    } catch {
+      return [];
+    }
+  };
+  const addChangeEntry = (entry) => {
+    const log = getChangeLog();
+    log.push(entry);
+    localStorage.setItem(CHANGE_LOG_KEY, JSON.stringify(log));
+  };
+  const publishChanges = () => {
+    localStorage.setItem(PUBLISH_TS_KEY, Date.now().toString());
+    // Do NOT clear log: we may want historical; we filter by timestamp > publishTs.
+    alert('Changes marked as published. Future Email Changes will list new items only.');
+  };
+  const changesSincePublish = () => {
+    const publishTs = getPublishTs();
+    return getChangeLog().filter(c => c.timestamp > publishTs);
+  };
 
   // Get user info from context
   const username = user?.username || 'user';
   const IS_ADMIN = user?.isAdmin || user?.username === 'ADMIN';
+
+  // Handler to generate AI email from changes
+  const handleGenerateEmail = async () => {
+    const changes = changesSincePublish();
+    if (changes.length === 0) return;
+
+    setGeneratingEmail(true);
+    setEmailError(null);
+    try {
+      const resp = await fetch('http://localhost:8000/generate-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ changes }),
+      });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error || 'Failed to generate email');
+      
+      setEmailContent({
+        subject: data.subject || 'Research Updates',
+        body: data.body || '',
+      });
+      setShowEmailModal(true);
+    } catch (err) {
+      setEmailError(err.message);
+      // Fallback to basic template
+      setEmailContent({
+        subject: 'Pending Research Updates',
+        body: `Dear Stakeholders,\n\nWe have ${changes.length} new research update${changes.length > 1 ? 's' : ''} to share:\n\n${changes.map(c => `• ${c.title} (${c.year}) – ${c.amount}\n  ${c.impact}`).join('\n\n')}\n\nBest regards,\nResearch Team`,
+      });
+      setShowEmailModal(true);
+    } finally {
+      setGeneratingEmail(false);
+    }
+  };
 
   // Handler to reject tile (close preview without saving - does NOT add tile)
   const handleRejectTile = () => {
@@ -304,6 +374,17 @@ export default function AdminDashboard() {
     };
     approvedTiles.push(tileData);
     localStorage.setItem('approvedResearchTiles', JSON.stringify(approvedTiles));
+
+    // Log change for email summary (approved research tile)
+    addChangeEntry({
+      id: tileData.id,
+      type: 'research_tile_added',
+      timestamp: Date.now(),
+      title: editedTile.title,
+      year: editedTile.year,
+      amount: editedTile.money,
+      impact: editedTile.impact?.slice(0, 140) || '',
+    });
     
     // Close preview and reset state
     setShowPreview(false);
@@ -438,18 +519,18 @@ export default function AdminDashboard() {
             maxWidth: 1400,
             margin: '0 auto',
             display: 'grid',
-            gridTemplateColumns: '480px 1fr',
+            gridTemplateColumns: '1fr 1fr',
             gap: 32,
             alignItems: 'flex-start',
           }}
         >
-          {/* Left: upload card */}
+          {/* Upload card */}
           <div
             style={{
               background: 'transparent',
               border: '1px solid #e0e0e0',
               borderRadius: 12,
-              padding: 28,
+              padding: 24,
               position: 'relative',
             }}
           >
@@ -571,37 +652,92 @@ export default function AdminDashboard() {
                 </div>
               )}
               <small style={{ color: '#666666' }}>
-                Supported: PDF (extracted text) or pasted raw text. Large files will be chunked
-                server‑side.
+                Supported: PDF (extracted text) or pasted raw text. 
               </small>
             </div>
           </div>
-          {/* Right: placeholder for parsed output */}
+
+          {/* Email Changes Panel (inline, same row) */}
           <div
             style={{
               background: 'transparent',
               border: '1px solid #e0e0e0',
               borderRadius: 12,
-              padding: 28,
-              minHeight: 380,
-              fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
-              fontSize: 13,
-              whiteSpace: 'pre-wrap',
-              overflow: 'auto',
+              padding: 24,
             }}
           >
-            {!uploadResult && !uploading && (
-              <div style={{ color: '#666666' }}>
-                Parsed research JSON will appear here after a successful upload.
-              </div>
-            )}
-            {uploading && (
-              <div style={{ color: '#000000' }}>Processing upload…</div>
-            )}
-            {uploadResult && (
-              <code style={{ color: '#000000' }}>{JSON.stringify(uploadResult, null, 2)}</code>
-            )}
+          <h3 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: '#000' }}>Changes Since Last Publish</h3>
+          <p style={{ margin: '8px 0 16px', color: '#555', fontSize: 14 }}>
+            Newly approved items not yet included in a publish cycle.
+          </p>
+          {changesSincePublish().length === 0 && (
+            <div style={{ padding: 16, background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 8, color: '#555', fontSize: 14 }}>
+              No changes pending. Approve new research tiles to see them here.
+            </div>
+          )}
+          {changesSincePublish().length > 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {changesSincePublish().map(change => (
+                <div
+                  key={change.id}
+                  style={{
+                    border: '1px solid #e5e7eb', background: '#fdfdfd', borderRadius: 10,
+                    padding: 14, display: 'grid', gridTemplateColumns: '120px 1fr', gap: 16,
+                  }}
+                >
+                  <div style={{ fontSize: 12, color: '#374151', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    <span style={{ fontWeight: 600 }}>Type</span>
+                    <span style={{ background: '#eff6ff', color: '#1d4ed8', padding: '4px 6px', borderRadius: 6, fontSize: 11 }}>
+                      {change.type.replace(/_/g, ' ')}
+                    </span>
+                    <span style={{ fontWeight: 600 }}>Time</span>
+                    <span>{new Date(change.timestamp).toLocaleString()}</span>
+                  </div>
+                  <div style={{ fontSize: 13, color: '#111', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <strong style={{ fontSize: 15 }}>{change.title}</strong>
+                    <div style={{ color: '#0f172a' }}>Year: {change.year} | Amount: {change.amount}</div>
+                    {change.impact && (
+                      <div style={{ color: '#475569' }}>{change.impact}</div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Email preview area */}
+          <div style={{ marginTop: 20 }}>
+            <h4 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 700 }}>Email Preview</h4>
+            <div
+              style={{
+                fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+                fontSize: 13, whiteSpace: 'pre-wrap', background: '#f8fafc',
+                border: '1px solid #e2e8f0', borderRadius: 8, padding: 14,
+              }}
+            >
+{`Subject: Pending Research Updates\n\n${changesSincePublish().length === 0 ? 'No new items since last publish.' : changesSincePublish().map(c => `• ${c.title} (${c.year}) – ${c.amount}`).join('\n')}\n\nNext step: Review these items and confirm before sending to stakeholders.\n\n-- Placeholder Generated Email`}
+            </div>
           </div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 16 }}>
+            <button
+              type="button"
+              onClick={handleGenerateEmail}
+              disabled={changesSincePublish().length === 0 || generatingEmail}
+              style={{
+                background: changesSincePublish().length === 0 || generatingEmail ? '#94a3b8' : '#2563eb',
+                border: 'none', color: '#fff', padding: '10px 20px', fontSize: 14,
+                fontWeight: 600, borderRadius: 8, cursor: changesSincePublish().length === 0 || generatingEmail ? 'not-allowed' : 'pointer'
+              }}
+            >
+              {generatingEmail ? 'Generating...' : 'Generate & Send Email'}
+            </button>
+          </div>
+          {emailError && (
+            <div style={{ color: '#ef4444', fontSize: 13, marginTop: 8, textAlign: 'right' }}>
+              {emailError}
+            </div>
+          )}
+        </div>
         </div>
       </section>
     )}
@@ -826,6 +962,205 @@ export default function AdminDashboard() {
               }}
             >
               {isEditMode ? 'Save & Approve' : 'Looks Good'}
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+    {/* Changes Email Modal */}
+    {showChangesModal && (
+      <div
+        style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.45)', display: 'flex',
+          alignItems: 'center', justifyContent: 'center', zIndex: 1100,
+        }}
+        onClick={(e) => { if (e.target === e.currentTarget) setShowChangesModal(false); }}
+      >
+        <div
+          style={{
+            background: '#fff', borderRadius: 12, padding: 28,
+            width: '90%', maxWidth: 760, maxHeight: '90vh', overflow: 'auto',
+            boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1),0 10px 10px -5px rgba(0,0,0,0.04)'
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <h3 style={{ margin: '0 0 8px', fontSize: 24, fontWeight: 800 }}>Changes Since Last Publish</h3>
+          <p style={{ margin: '0 0 18px', color: '#555', fontSize: 14 }}>
+            These are newly approved items not yet included in a publish cycle
+          </p>
+          {changesSincePublish().length === 0 && (
+            <div style={{ padding: 16, background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 8, color: '#555', fontSize: 14 }}>
+              No changes pending. Approve new research tiles to see them here.
+            </div>
+          )}
+          {changesSincePublish().length > 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {changesSincePublish().map(change => (
+                <div
+                  key={change.id}
+                  style={{
+                    border: '1px solid #e5e7eb', background: '#fdfdfd', borderRadius: 10,
+                    padding: 14, display: 'grid', gridTemplateColumns: '120px 1fr', gap: 16,
+                  }}
+                >
+                  <div style={{ fontSize: 12, color: '#374151', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    <span style={{ fontWeight: 600 }}>Type</span>
+                    <span style={{ background: '#eff6ff', color: '#1d4ed8', padding: '4px 6px', borderRadius: 6, fontSize: 11 }}>
+                      {change.type.replace(/_/g, ' ')}
+                    </span>
+                    <span style={{ fontWeight: 600 }}>Time</span>
+                    <span>{new Date(change.timestamp).toLocaleString()}</span>
+                  </div>
+                  <div style={{ fontSize: 13, color: '#111', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <strong style={{ fontSize: 15 }}>{change.title}</strong>
+                    <div style={{ color: '#0f172a' }}>Year: {change.year} | Amount: {change.amount}</div>
+                    {change.impact && (
+                      <div style={{ color: '#475569' }}>{change.impact}</div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          {/* Email preview area */}
+          <div style={{ marginTop: 24 }}>
+            <h4 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 700 }}>Email Preview</h4>
+            <div
+              style={{
+                fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+                fontSize: 13, whiteSpace: 'pre-wrap', background: '#f8fafc',
+                border: '1px solid #e2e8f0', borderRadius: 8, padding: 14,
+              }}
+            >
+{`Subject: Pending Research Updates\n\n${changesSincePublish().length === 0 ? 'No new items since last publish.' : changesSincePublish().map(c => `• ${c.title} (${c.year}) – ${c.amount}`).join('\n')}\n\nNext step: Review these items and confirm before sending to stakeholders.\n\n--`}
+            </div>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 24 }}>
+            <button
+              type="button"
+              onClick={() => setShowChangesModal(false)}
+              style={{
+                background: '#fff', border: '1px solid #d1d5db', color: '#374151',
+                padding: '10px 20px', fontSize: 14, fontWeight: 600, borderRadius: 8, cursor: 'pointer'
+              }}
+            >
+              Close
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                console.log('Placeholder send email with changes', changesSincePublish());
+                alert('Email Sent');
+              }}
+              disabled={changesSincePublish().length === 0}
+              style={{
+                background: changesSincePublish().length === 0 ? '#94a3b8' : '#2563eb',
+                border: 'none', color: '#fff', padding: '10px 20px', fontSize: 14,
+                fontWeight: 600, borderRadius: 8, cursor: changesSincePublish().length === 0 ? 'not-allowed' : 'pointer'
+              }}
+            >
+              Send Email 
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+
+    {/* Email Edit Modal */}
+    {showEmailModal && (
+      <div
+        style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex',
+          alignItems: 'center', justifyContent: 'center', zIndex: 1100,
+        }}
+        onClick={(e) => { if (e.target === e.currentTarget) setShowEmailModal(false); }}
+      >
+        <div
+          style={{
+            background: '#fff', borderRadius: 12, padding: 28,
+            width: '90%', maxWidth: 800, maxHeight: '90vh', overflow: 'auto',
+            boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1),0 10px 10px -5px rgba(0,0,0,0.04)'
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <h3 style={{ margin: '0 0 8px', fontSize: 24, fontWeight: 800, color: '#000' }}>
+            Review & Edit Email
+          </h3>
+          <p style={{ margin: '0 0 24px', color: '#666', fontSize: 14 }}>
+            Review the AI-generated email and make any edits before sending.
+          </p>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div>
+              <label style={{ display: 'block', marginBottom: 6, fontWeight: 600, color: '#000', fontSize: 14 }}>
+                Subject:
+              </label>
+              <input
+                type="text"
+                value={emailContent.subject}
+                onChange={(e) => setEmailContent({ ...emailContent, subject: e.target.value })}
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  border: '1px solid #e0e0e0',
+                  borderRadius: 8,
+                  fontSize: 14,
+                  outline: 'none',
+                  fontFamily: 'inherit',
+                }}
+              />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', marginBottom: 6, fontWeight: 600, color: '#000', fontSize: 14 }}>
+                Email Body:
+              </label>
+              <textarea
+                value={emailContent.body}
+                onChange={(e) => setEmailContent({ ...emailContent, body: e.target.value })}
+                rows={16}
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  border: '1px solid #e0e0e0',
+                  borderRadius: 8,
+                  fontSize: 14,
+                  outline: 'none',
+                  resize: 'vertical',
+                  fontFamily: 'inherit',
+                  lineHeight: '1.6',
+                }}
+              />
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 24 }}>
+            <button
+              type="button"
+              onClick={() => setShowEmailModal(false)}
+              style={{
+                background: '#fff', border: '1px solid #d1d5db', color: '#374151',
+                padding: '10px 20px', fontSize: 14, fontWeight: 600, borderRadius: 8, cursor: 'pointer'
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                console.log('Sending email:', emailContent);
+                alert(`Email would be sent!\n\nSubject: ${emailContent.subject}\n\nBody preview: ${emailContent.body.slice(0, 100)}...`);
+                setShowEmailModal(false);
+              }}
+              style={{
+                background: '#2563eb',
+                border: 'none', color: '#fff', padding: '10px 20px', fontSize: 14,
+                fontWeight: 600, borderRadius: 8, cursor: 'pointer'
+              }}
+            >
+              Send Email
             </button>
           </div>
         </div>
