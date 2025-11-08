@@ -105,8 +105,8 @@ export default function SignIn() {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 sx={{
-                  '& .MuiInputLabel-root': { color: '#ffffff' },
-                  '& .MuiInputBase-input': { color: '#ffffff' },
+                  '& .MuiInputLabel-root': { color: '#000000' },
+                  '& .MuiInputBase-input': { color: '#000000' },
                   '& .MuiOutlinedInput-root': {
                     '& fieldset': { borderColor: 'rgba(255,255,255,0.12)' },
                     '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.18)' },
@@ -125,8 +125,8 @@ export default function SignIn() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 sx={{
-                  '& .MuiInputLabel-root': { color: 'rgba(255,255,255,0.9)' },
-                  '& .MuiInputBase-input': { color: '#ffffff' },
+                  '& .MuiInputLabel-root': { color: '#000000' },
+                  '& .MuiInputBase-input': { color: '#000000' },
                   '& .MuiOutlinedInput-root': {
                     '& fieldset': { borderColor: 'rgba(255,255,255,0.12)' },
                     '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.18)' },
