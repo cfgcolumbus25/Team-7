@@ -78,6 +78,30 @@ const ResearchTile = styled(Card)(({ theme }) => ({
   },
 }));
 
+// Export a reusable ResearchTile component for preview
+export function ResearchTileCard({ title, impact, money, summary }) {
+  return (
+    <ResearchTile>
+      <CardContent sx={{ flexGrow: 1 }}>
+        <Typography variant="h6" component="h3" gutterBottom sx={{ fontWeight: 'bold' }}>
+          {title}
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          {impact}
+        </Typography>
+        <Typography variant="h6" color="primary" sx={{ mb: 2, fontWeight: 'bold' }}>
+          {money}
+        </Typography>
+        {summary && (
+          <Typography variant="body2" sx={{ mt: 2, color: 'text.secondary' }}>
+            {summary}
+          </Typography>
+        )}
+      </CardContent>
+    </ResearchTile>
+  );
+}
+
 export default function ResearchTimeline({ selectedYear, setSelectedYear }) {
   // use props if provided, otherwise use local state
   const [localYear, setLocalYear] = useState(2012);
@@ -110,13 +134,28 @@ export default function ResearchTimeline({ selectedYear, setSelectedYear }) {
   // dummy data for research tiles - returns 2-3 tiles per year
   const getResearchTiles = (year) => {
     const tileCount = 2 + (year % 2); // 2 or 3 tiles
-    return Array.from({ length: tileCount }, (_, index) => ({
+    const dummyTiles = Array.from({ length: tileCount }, (_, index) => ({
       id: `${year}-${index + 1}`,
       title: `Research Project ${index + 1}`,
       impact: `Impact description for ${year}`,
       money: `$${(Math.random() * 500000 + 100000).toFixed(0)}`,
       summary: `This research project conducted in ${year} has made significant contributions to the field. The project focused on advancing our understanding of key research areas and has resulted in measurable improvements. Through dedicated funding and collaborative efforts, we were able to achieve breakthrough results that will benefit the community for years to come.`,
     }));
+    
+    // Get approved tiles from localStorage
+    const approvedTiles = JSON.parse(localStorage.getItem('approvedResearchTiles') || '[]');
+    const approvedForYear = approvedTiles
+      .filter(tile => tile.year === year)
+      .map(tile => ({
+        id: tile.id,
+        title: tile.title,
+        impact: tile.impact,
+        money: tile.money,
+        summary: tile.summary,
+      }));
+    
+    // Combine approved tiles with dummy tiles
+    return [...approvedForYear, ...dummyTiles];
   };
 
   const researchTiles = getResearchTiles(currentYear);

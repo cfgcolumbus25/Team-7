@@ -1,10 +1,11 @@
 import { BrowserRouter, Outlet, Route, Routes } from "react-router-dom";
-import Overview from "./pages/Overview.jsx";
-import AdminDashboard from "./pages/AdminDashboard.jsx";
-import SignIn from "./pages/SignIn.jsx";
 import Header from "./components/header.jsx";
 import NavBar from "./components/NavBar.jsx";
 import { UserProvider } from "./contexts/UserContext.jsx";
+import AdminDashboard from "./pages/AdminDashboard.jsx";
+import Donate from "./pages/Donate.jsx";
+import Overview from "./pages/Overview.jsx";
+import SignIn from "./pages/SignIn.jsx";
 
 function Layout() {
   return (
@@ -29,6 +30,7 @@ export default function App() {
           <Route path="/" element={<Layout />}>
             <Route index element={<Overview />} />
             <Route path="admin" element={<AdminDashboard />} />
+            <Route path="donate" element={<Donate />} />
             <Route path="signin" element={<SignIn />} />
           </Route>
         </Routes>
