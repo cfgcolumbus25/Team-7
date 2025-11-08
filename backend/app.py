@@ -56,6 +56,8 @@ app = Flask(__name__)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1)
 
 ALLOWED_ORIGIN = os.getenv("FRONTEND_ORIGIN", "http://localhost:5173")
+JWT_SECRET = os.getenv("JWT_SECRET", "change-this-secret-key")  # Add this line here!
+
 @app.after_request
 def apply_cors(resp):
     origin = request.headers.get("Origin")
