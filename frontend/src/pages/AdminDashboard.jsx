@@ -162,9 +162,9 @@ export default function AdminDashboard() {
   const username = user?.username || 'user';
   const IS_ADMIN = user?.isAdmin || user?.username === 'ADMIN';
 
-  // Replace these with your uploaded images (served from /public at the site root)
-  // Your file currently lives at frontend/public/profile.jpeg, so reference it at "/profile.jpeg"
-  const profileSrc = "/profile.jpeg";
+  // Set profile picture based on user role
+  // Admin uses /profile.jpeg, regular users use /user-profile.jpeg
+  const profileSrc = IS_ADMIN ? "/profile.jpeg" : "/user-profile.jpeg";
   const golfBadge = "https://upload.wikimedia.org/wikipedia/commons/thumb/7/70/Golf_green_flag_icon.svg/240px-Golf_green_flag_icon.svg.png";
   const tieBadge = "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/Black_necktie_icon.svg/240px-Black_necktie_icon.svg.png";
 
