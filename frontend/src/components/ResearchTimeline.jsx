@@ -1,20 +1,20 @@
-import React, { useState } from 'react';
-import { 
-  Slider, 
-  Box, 
-  Typography, 
-  Card, 
-  CardContent, 
-  Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  IconButton
-} from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
+import {
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  IconButton,
+  Slider,
+  Typography
+} from '@mui/material';
 import { styled } from '@mui/material/styles';
 import React, { useState } from 'react';
+
 
 // container wrapper to center everything and add some padding
 const Container = styled(Box)(({ theme }) => ({
@@ -75,9 +75,7 @@ export default function ResearchTimeline({ selectedYear, setSelectedYear }) {
   const [localYear, setLocalYear] = useState(2012);
   const currentYear = selectedYear !== undefined ? selectedYear : localYear;
   const updateYear = setSelectedYear || setLocalYear;
-export default function ResearchTimeline() {
-  // track which year the user has selected, starting at 2012
-  const [selectedYear, setSelectedYear] = useState(2012);
+  
   // track which tile's popup is open (null if none)
   const [openTileId, setOpenTileId] = useState(null);
 
@@ -114,7 +112,6 @@ export default function ResearchTimeline() {
   };
 
   const researchTiles = getResearchTiles(currentYear);
-  const researchTiles = getResearchTiles(selectedYear);
   const selectedTile = researchTiles.find(tile => tile.id === openTileId);
 
   return (

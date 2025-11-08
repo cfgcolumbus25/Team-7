@@ -1,13 +1,12 @@
 import {
-  BrowserRouter,
-  Routes,
-  Route,
-  Outlet,
-  NavLink,
+    BrowserRouter,
+    Outlet,
+    Route,
+    Routes
 } from "react-router-dom";
-import Overview from "./pages/Overview.jsx";
-import AdminDashboard from "./pages/AdminDashboard.jsx";
 import Header from "./components/Header.jsx";
+import AdminDashboard from "./pages/AdminDashboard.jsx";
+import Overview from "./pages/Overview.jsx";
 
 function Layout() {
   return (
