@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { useUser } from "../contexts/UserContext.jsx";
 import { ResearchTileCard } from "../components/ResearchTimeline.jsx";
 
@@ -37,6 +37,22 @@ function Tooltip({ label, children }) {
 // Simple SVG bar chart; pass data like [{year: 2022, amount: 1200}, ...]
 function BarChart({ width = 800, height = 360, data = [] }) {
   const [hoverIndex, setHoverIndex] = useState(null);
+  const [mounted, setMounted] = useState(false);
+
+  // Trigger one-time mount animation for bars
+  useEffect(() => {
+    // Respect reduced motion where possible
+    const prefersReduced =
+      typeof window !== 'undefined' &&
+      window.matchMedia &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReduced) {
+      setMounted(true);
+      return;
+    }
+    const rAF = requestAnimationFrame(() => setMounted(true));
+    return () => cancelAnimationFrame(rAF);
+  }, []);
   const padding = 48;
   const innerW = width - padding * 2;
   const innerH = height - padding * 2;
@@ -90,6 +106,13 @@ function BarChart({ width = 800, height = 360, data = [] }) {
                 height={h}
                 fill={isHovered ? "#0b63ff" : "#1677ff"}
                 rx={10}
+                style={{
+                  transform: `scaleY(${mounted ? 1 : 0})`,
+                  transformOrigin: 'bottom',
+                  transformBox: 'fill-box',
+                  transition: 'transform 1200ms cubic-bezier(0.22, 1, 0.36, 1)',
+                  transitionDelay: `${i * 80}ms`,
+                }}
               />
               {/* Native title tooltip for quick hover details */}
               <title>{`$${d.amount.toLocaleString()} in ${d.year}`}</title>
@@ -147,6 +170,88 @@ export default function AdminDashboard() {
   );
   const total = donations.reduce((s, d) => s + d.amount, 0);
   const yearsActive = donations.length;
+
+  // Animated total counter (counts up on mount/when total changes)
+  const [displayTotal, setDisplayTotal] = useState(0);
+  const totalAnimRef = useRef(null);
+  const [displayYearsActive, setDisplayYearsActive] = useState(0);
+  const yearsAnimRef = useRef(null);
+
+  useEffect(() => {
+    const prefersReduced =
+      typeof window !== 'undefined' &&
+      window.matchMedia &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const startVal = displayTotal;
+    const endVal = total;
+
+    if (startVal === endVal) return; // nothing to animate
+
+    if (prefersReduced) {
+      setDisplayTotal(endVal);
+      return;
+    }
+
+    const DURATION = 1800; // ms, slower and smooth
+    const start = performance.now();
+    const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
+
+    const tick = (now) => {
+      const elapsed = now - start;
+      const t = Math.min(1, elapsed / DURATION);
+      const eased = easeOutCubic(t);
+      const value = Math.round(startVal + (endVal - startVal) * eased);
+      setDisplayTotal(value);
+      if (t < 1) {
+        totalAnimRef.current = requestAnimationFrame(tick);
+      }
+    };
+
+    totalAnimRef.current = requestAnimationFrame(tick);
+    return () => {
+      if (totalAnimRef.current) cancelAnimationFrame(totalAnimRef.current);
+    };
+    // Only re-run when total changes; startVal captured from current state
+  }, [total]);
+
+  // Animated years active counter
+  useEffect(() => {
+    const prefersReduced =
+      typeof window !== 'undefined' &&
+      window.matchMedia &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const startVal = displayYearsActive;
+    const endVal = yearsActive;
+
+    if (startVal === endVal) return;
+
+    if (prefersReduced) {
+      setDisplayYearsActive(endVal);
+      return;
+    }
+
+    const DURATION = 1200; // ms
+    const start = performance.now();
+    const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
+
+    const tick = (now) => {
+      const elapsed = now - start;
+      const t = Math.min(1, elapsed / DURATION);
+      const eased = easeOutCubic(t);
+      const value = Math.round(startVal + (endVal - startVal) * eased);
+      setDisplayYearsActive(value);
+      if (t < 1) {
+        yearsAnimRef.current = requestAnimationFrame(tick);
+      }
+    };
+
+    yearsAnimRef.current = requestAnimationFrame(tick);
+    return () => {
+      if (yearsAnimRef.current) cancelAnimationFrame(yearsAnimRef.current);
+    };
+  }, [yearsActive]);
 
   // ---- Admin panel state (optional upload) ----
   const [uploading, setUploading] = useState(false);
@@ -309,11 +414,11 @@ export default function AdminDashboard() {
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
           <div>
             <div style={{ color: "#666666" }}>Total Donated</div>
-            <div style={{ fontWeight: 900, fontSize: 28, color: "#000000" }}>{total.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</div>
+            <div style={{ fontWeight: 900, fontSize: 28, color: "#000000" }}>{displayTotal.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</div>
           </div>
           <div>
             <div style={{ color: "#666666" }}>Years Active</div>
-            <div style={{ fontWeight: 900, fontSize: 28, color: "#000000" }}>{yearsActive}</div>
+            <div style={{ fontWeight: 900, fontSize: 28, color: "#000000" }}>{displayYearsActive}</div>
           </div>
         </div>
       </main>
