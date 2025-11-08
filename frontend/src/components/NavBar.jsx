@@ -18,7 +18,7 @@ export default function NavBar() {
           isActive ? "nav-link nav-link--active" : "nav-link"
         }
       >
-        Admin Dashboard
+        Dashboard
       </NavLink>
     </nav>
   );
