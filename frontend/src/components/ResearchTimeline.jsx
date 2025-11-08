@@ -15,6 +15,26 @@ const SliderContainer = styled(Box)(({ theme }) => ({
   backgroundColor: '#fafafa',
   borderRadius: theme.shape.borderRadius * 2,
   marginBottom: theme.spacing(4),
+  position: 'relative',
+}));
+
+// container for the slider with relative positioning for the year label
+const SliderWrapper = styled(Box)({
+  position: 'relative',
+  paddingBottom: '25px', // space for the year label below
+});
+
+// styled component for the year label positioned below the thumb
+const YearLabel = styled(Typography)(({ position }) => ({
+  position: 'absolute',
+  bottom: '-15px',
+  left: `calc(${position}% - 20px)`, // center the label under the thumb
+  fontWeight: 'bold',
+  fontSize: '1.1rem',
+  color: '#1976d2',
+  pointerEvents: 'none',
+  minWidth: '40px',
+  textAlign: 'center',
 }));
 
 export default function ResearchTimeline() {
@@ -26,6 +46,11 @@ export default function ResearchTimeline() {
     setSelectedYear(newValue);
   };
 
+  // calculate the position percentage for the year label
+  const min = 2012;
+  const max = 2025;
+  const position = ((selectedYear - min) / (max - min)) * 100;
+
   return (
     <Container>
       <Typography variant="h4" component="h2" gutterBottom sx={{ mb: 4, fontWeight: 'bold' }}>
@@ -36,16 +61,19 @@ export default function ResearchTimeline() {
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
           Select a year:
         </Typography>
-        {/* i need to change this: basic slider for selecting years between 2012 and 2025 */}
-        <Slider
-          value={selectedYear}
-          onChange={handleSliderChange}
-          min={2012}
-          max={2025}
-          step={1}
-          valueLabelDisplay="auto"
-          valueLabelFormat={(value) => value}
-        />
+        <SliderWrapper>
+          <Slider
+            value={selectedYear}
+            onChange={handleSliderChange}
+            min={2012}
+            max={2025}
+            step={1}
+            valueLabelDisplay="off"
+          />
+          <YearLabel position={position}>
+            {selectedYear}
+          </YearLabel>
+        </SliderWrapper>
       </SliderContainer>
     </Container>
   );
