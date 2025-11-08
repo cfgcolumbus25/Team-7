@@ -29,7 +29,7 @@ export default function ResearchTimeline() {
   return (
     <Container>
       <Typography variant="h4" component="h2" gutterBottom sx={{ mb: 4, fontWeight: 'bold' }}>
-        Research Timeline
+        View Donor Impact
       </Typography>
 
       <SliderContainer>
