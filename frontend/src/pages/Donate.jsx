@@ -1,6 +1,8 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export default function Donate() {
+  const navigate = useNavigate();
   // Template state only (no side effects)
   const [type, setType] = useState('individual'); // 'individual' | 'team'
   const [donorName, setDonorName] = useState('');
@@ -23,6 +25,38 @@ export default function Donate() {
 
   return (
     <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem' }}>
+      {/* Back to Overview button */}
+      <div style={{ marginBottom: '1.5rem' }}>
+        <button
+          type="button"
+          onClick={() => navigate("/")}
+          style={{
+            background: "#fff",
+            border: "1px solid #e0e0e0",
+            color: "#000000",
+            padding: "10px 20px",
+            fontSize: 14,
+            fontWeight: 600,
+            borderRadius: 8,
+            cursor: "pointer",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 8,
+            transition: "all 0.2s ease",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "#f5f5f5";
+            e.currentTarget.style.borderColor = "#d0d0d0";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "#fff";
+            e.currentTarget.style.borderColor = "#e0e0e0";
+          }}
+        >
+          <span>←</span>
+          <span>Back to Overview</span>
+        </button>
+      </div>
       {/* Page header */}
       <div style={{ marginBottom: '2rem' }}>
         <h2 style={{ fontSize: '2rem', fontWeight: '700', marginBottom: '0.5rem', color: '#1e293b' }}>
