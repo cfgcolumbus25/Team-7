@@ -13,7 +13,8 @@ const FUNDRAISING_YEARS = [
 ];
 
 export default function Overview() {
-  const [selectedYear, setSelectedYear] = useState(2012);
+  const firstYear = FUNDRAISING_YEARS[0].year;
+  const [selectedYear, setSelectedYear] = useState(firstYear);
 
   const formatYAxis = (value) => {
     if (value >= 1000000) {
@@ -66,12 +67,14 @@ export default function Overview() {
                   padding: '8px 12px'
                 }}
               />
-              <ReferenceLine 
-                x={selectedYear} 
-                stroke="#1E88E5" 
-                strokeDasharray="4 4"
-                strokeWidth={2}
-              />
+              {FUNDRAISING_YEARS.some(entry => entry.year === selectedYear) && (
+                <ReferenceLine 
+                  x={selectedYear} 
+                  stroke="#1E88E5" 
+                  strokeDasharray="4 4"
+                  strokeWidth={2}
+                />
+              )}
               <Bar dataKey="amount" radius={[4, 4, 0, 0]}>
                 {FUNDRAISING_YEARS.map((entry) => (
                   <Cell
