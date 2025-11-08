@@ -2,12 +2,30 @@ import os
 import io
 import re
 import json
-from datetime import datetime
+import uuid
+from datetime import datetime, timedelta
 from typing import List, Optional, Tuple
 
 from flask import Flask, request, jsonify
 from werkzeug.middleware.proxy_fix import ProxyFix
 from pydantic import BaseModel, Field, ValidationError, field_validator
+import bcrypt
+import jwt
+
+# --- Supabase integration ---
+from supabase_client import (
+    supabase,
+    upload_pdf_to_storage,
+    save_pdf_metadata,
+    save_research_data,
+    mark_pdf_processed,
+    get_research_by_year,
+    get_all_research,
+    get_all_pdfs,
+    save_email_template,
+    register_user,
+    get_user_by_email
+)
 
 # --- env (so you can keep GEMINI_API_KEY in .env) ---
 try:
@@ -486,6 +504,198 @@ def generate_email():
         return jsonify(result), 200
         
     except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# ----------------- Auth Helpers -----------------
+def create_token(user_id: str, email: str, role: str) -> str:
+    """Create JWT token."""
+    payload = {
+        "id": user_id,
+        "email": email,
+        "role": role,
+        "exp": datetime.utcnow() + timedelta(hours=24)
+    }
+    return jwt.encode(payload, JWT_SECRET, algorithm="HS256")
+
+def verify_token(token: str) -> dict:
+    """Verify JWT token."""
+    try:
+        return jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
+    except jwt.ExpiredSignatureError:
+        raise Exception("Token expired")
+    except jwt.InvalidTokenError:
+        raise Exception("Invalid token")
+
+def require_auth(f):
+    """Decorator to require authentication."""
+    from functools import wraps
+    
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if request.method == "OPTIONS":
+            return ("", 204)
+        
+        auth_header = request.headers.get("Authorization")
+        if not auth_header or not auth_header.startswith("Bearer "):
+            return jsonify({"error": "Access denied"}), 401
+        
+        token = auth_header.split(" ")[1]
+        try:
+            user = verify_token(token)
+            request.user = user
+            return f(*args, **kwargs)
+        except Exception as e:
+            return jsonify({"error": str(e)}), 403
+    
+    return decorated
+
+# ----------------- Auth Routes -----------------
+@app.route("/api/auth/register", methods=["POST", "OPTIONS"])
+def auth_register():
+    if request.method == "OPTIONS":
+        return ("", 204)
+    
+    try:
+        data = request.get_json(silent=True) or {}
+        email = (data.get("email") or "").strip()
+        password = (data.get("password") or "").strip()
+        role = (data.get("role") or "").strip()  # new field
+        
+        if not email or not password:
+            return jsonify({"error": "Email and password are required"}), 400
+        
+        # Check if user already exists
+        existing_user = get_user_by_email(email)
+        if existing_user:
+            return jsonify({"error": "User already exists"}), 400
+        
+        # Hash the password
+        hashed_password = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
+        
+        # Save the new user to Supabase
+        user_data = register_user(
+            email=email,
+            password=hashed_password.decode("utf-8"),
+            role=role  # save role
+        )
+        
+        # Automatically log in the user after registration
+        token = create_token(user_data["id"], email, role)
+        
+        return jsonify({
+            "id": user_data["id"],
+            "email": email,
+            "role": role,
+            "token": token
+        }), 201
+    
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/auth/login", methods=["POST", "OPTIONS"])
+def auth_login():
+    if request.method == "OPTIONS":
+        return ("", 204)
+    
+    try:
+        data = request.get_json(silent=True) or {}
+        email = (data.get("email") or "").strip()
+        password = (data.get("password") or "").strip()
+        
+        if not email or not password:
+            return jsonify({"error": "Email and password are required"}), 400
+        
+        # Fetch the user from Supabase
+        user = get_user_by_email(email)
+        if not user:
+            return jsonify({"error": "Invalid email or password"}), 401
+        
+        # Check if the password matches
+        if not bcrypt.checkpw(password.encode("utf-8"), user["password"].encode("utf-8")):
+            return jsonify({"error": "Invalid email or password"}), 401
+        
+        # Create a JWT token
+        token = create_token(user["id"], email, user.get("role", "user"))
+        
+        return jsonify({
+            "id": user["id"],
+            "email": email,
+            "role": user.get("role", "user"),
+            "token": token
+        }), 200
+    
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# ----------------- Research Data Routes -----------------
+@app.route("/api/research", methods=["GET", "OPTIONS"])
+def get_research():
+    """Get all research data from Supabase database."""
+    if request.method == "OPTIONS":
+        return ("", 204)
+    
+    try:
+        year = request.args.get("year")
+        
+        if year:
+            data = get_research_by_year(int(year))
+        else:
+            data = get_all_research()
+        
+        print(f"Returning {len(data)} research items from database")
+        return jsonify(data), 200
+    except Exception as e:
+        print(f"Error fetching research: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/research/year/<int:year>", methods=["GET", "OPTIONS"])
+def get_research_by_year_route(year):
+    """Get research data for a specific year from Supabase."""
+    if request.method == "OPTIONS":
+        return ("", 204)
+    
+    try:
+        data = get_research_by_year(year)
+        print(f"Returning {len(data)} research items for year {year}")
+        return jsonify(data), 200
+    except Exception as e:
+        print(f"Error fetching research for year {year}: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/research/add", methods=["POST", "OPTIONS"])
+@require_auth
+def add_research_manual():
+    """Manually add a research tile (used by admin dashboard when approving tiles)."""
+    try:
+        data = request.get_json() or {}
+        
+        title = data.get("title", "").strip()
+        year = data.get("year")
+        impact = data.get("impact", "").strip()
+        money = data.get("money", "").strip()
+        summary = data.get("summary", "").strip()
+        
+        if not title or not year:
+            return jsonify({"error": "Title and year are required"}), 400
+        
+        # Save to Supabase with user info
+        research_data = save_research_data(
+            pdf_id=None,
+            title=title,
+            year=int(year),
+            impact=impact,
+            money=money,
+            summary=summary,
+            created_by=request.user["id"]
+        )
+        
+        print(f"Successfully saved research tile: {research_data}")
+        return jsonify(research_data), 201
+        
+    except Exception as e:
+        print(f"Error adding research: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":

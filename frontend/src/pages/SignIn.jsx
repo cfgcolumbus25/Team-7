@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { useEffect, useState } from "react";
 import { useNavigate, Link as RouterLink, Router } from "react-router-dom";
 import {
@@ -9,6 +10,12 @@ import {
   Alert,
 } from "@mui/material";
 import { useUser } from "../contexts/UserContext.jsx";
+=======
+import { Alert, Box, Button, Container, TextField, Typography } from '@mui/material';
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useUser } from '../contexts/UserContext.jsx';
+>>>>>>> f25131d7d1afbc12f58d04d319388c74cf91ef2d
 
 // test credentials
 const TEST_USERS = {
@@ -124,6 +131,7 @@ export default function SignIn() {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 sx={{
+<<<<<<< HEAD
                   "& .MuiInputLabel-root": { color: "#000000" },
                   "& .MuiInputBase-input": { color: "#000000" },
                   "& .MuiOutlinedInput-root": {
@@ -131,6 +139,13 @@ export default function SignIn() {
                     "&:hover fieldset": {
                       borderColor: "rgba(255,255,255,0.18)",
                     },
+=======
+                  '& .MuiInputLabel-root': { color: '#ffffff' },
+                  '& .MuiInputBase-input': { color: '#ffffff' },
+                  '& .MuiOutlinedInput-root': {
+                    '& fieldset': { borderColor: 'rgba(255,255,255,0.12)' },
+                    '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.18)' },
+>>>>>>> f25131d7d1afbc12f58d04d319388c74cf91ef2d
                   },
                 }}
               />
@@ -146,6 +161,7 @@ export default function SignIn() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 sx={{
+<<<<<<< HEAD
                   "& .MuiInputLabel-root": { color: "#000000" },
                   "& .MuiInputBase-input": { color: "#000000" },
                   "& .MuiOutlinedInput-root": {
@@ -153,6 +169,13 @@ export default function SignIn() {
                     "&:hover fieldset": {
                       borderColor: "rgba(255,255,255,0.18)",
                     },
+=======
+                  '& .MuiInputLabel-root': { color: 'rgba(255,255,255,0.9)' },
+                  '& .MuiInputBase-input': { color: '#ffffff' },
+                  '& .MuiOutlinedInput-root': {
+                    '& fieldset': { borderColor: 'rgba(255,255,255,0.12)' },
+                    '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.18)' },
+>>>>>>> f25131d7d1afbc12f58d04d319388c74cf91ef2d
                   },
                 }}
               />
