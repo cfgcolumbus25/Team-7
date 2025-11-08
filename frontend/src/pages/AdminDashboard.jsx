@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useUser } from "../contexts/UserContext.jsx";
+import { ResearchTileCard } from "../components/ResearchTimeline.jsx";
 
 // Tiny tooltip component
 function Tooltip({ label, children }) {
@@ -123,6 +124,12 @@ function BarChart({ width = 800, height = 360, data = [] }) {
   );
 }
 
+// Helper to format money - ensures it has $ sign
+function formatMoney(amountDisplay) {
+  if (!amountDisplay || amountDisplay.trim() === '') return '$0';
+  return amountDisplay.startsWith('$') ? amountDisplay : `$${amountDisplay}`;
+}
+
 export default function AdminDashboard() {
   // Get user state from context
   const { user } = useUser();
@@ -146,6 +153,10 @@ export default function AdminDashboard() {
   const [uploadError, setUploadError] = useState(null);
   const [uploadResult, setUploadResult] = useState(null);
   const [file, setFile] = useState(null);
+
+  // ---- Preview dialog state ----
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewProject, setPreviewProject] = useState(null);
 
   // Get user info from context
   const username = user?.username || 'user';
@@ -350,6 +361,13 @@ export default function AdminDashboard() {
                     const data = await resp.json();
                     if (!resp.ok) throw new Error(data.error || 'Upload failed');
                     setUploadResult(data);
+                    
+                    // Show preview if we have projects
+                    if (data.projects && data.projects.length > 0) {
+                      // Use the first project for preview
+                      setPreviewProject(data.projects[0]);
+                      setShowPreview(true);
+                    }
                   } catch (err) {
                     setUploadError(err.message);
                   } finally {
@@ -416,6 +434,113 @@ export default function AdminDashboard() {
           </div>
         </div>
       </section>
+    )}
+    
+    {/* Preview Dialog */}
+    {showPreview && previewProject && (
+      <div
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+        }}
+        onClick={() => setShowPreview(false)}
+      >
+        <div
+          style={{
+            background: '#fff',
+            borderRadius: 12,
+            padding: 28,
+            maxWidth: 600,
+            width: '90%',
+            maxHeight: '90vh',
+            overflow: 'auto',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <h3 style={{ margin: '0 0 8px', fontSize: 24, fontWeight: 800 }}>
+            Review Research Tile
+          </h3>
+          <p style={{ margin: '0 0 24px', color: '#6b7280', fontSize: 14 }}>
+            Please review how this will appear and confirm if it looks correct
+          </p>
+          
+          <div style={{ marginBottom: 24 }}>
+            <ResearchTileCard
+              title={previewProject.title || "Untitled Project"}
+              impact={previewProject.timeline_snippet || "No timeline available"}
+              money={formatMoney(previewProject.fund_usage?.amount_display)}
+              summary={previewProject.layman_summary || "No summary available"}
+            />
+          </div>
+          
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
+            <button
+              type="button"
+              onClick={() => {
+                setShowPreview(false);
+                setPreviewProject(null);
+              }}
+              style={{
+                background: '#fff',
+                border: '1px solid #d1d5db',
+                color: '#374151',
+                padding: '10px 20px',
+                fontSize: 14,
+                fontWeight: 600,
+                borderRadius: 8,
+                cursor: 'pointer',
+              }}
+            >
+              Not Correct
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                // Save approved tile to localStorage
+                const approvedTiles = JSON.parse(localStorage.getItem('approvedResearchTiles') || '[]');
+                const tileData = {
+                  id: `approved-${Date.now()}`,
+                  title: previewProject.title || "Untitled Project",
+                  impact: previewProject.timeline_snippet || "No timeline available",
+                  money: formatMoney(previewProject.fund_usage?.amount_display),
+                  summary: previewProject.layman_summary || "No summary available",
+                  year: uploadResult?.project_year || new Date().getFullYear(),
+                  // Store full project data for reference
+                  projectData: previewProject,
+                };
+                approvedTiles.push(tileData);
+                localStorage.setItem('approvedResearchTiles', JSON.stringify(approvedTiles));
+                
+                setShowPreview(false);
+                setPreviewProject(null);
+                // Show success message
+                alert('Research tile approved and added to timeline!');
+              }}
+              style={{
+                background: '#2563eb',
+                border: 'none',
+                color: '#fff',
+                padding: '10px 20px',
+                fontSize: 14,
+                fontWeight: 600,
+                borderRadius: 8,
+                cursor: 'pointer',
+              }}
+            >
+              Looks Good
+            </button>
+          </div>
+        </div>
+      </div>
     )}
     </>
   );
