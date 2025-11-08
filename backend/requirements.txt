@@ -6,3 +6,6 @@ pytest
 google-generativeai>=0.7.2
 PyMuPDF
 python-dotenv
+supabase
+bcrypt
+jwt
