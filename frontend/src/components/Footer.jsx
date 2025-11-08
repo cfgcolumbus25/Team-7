@@ -4,7 +4,8 @@ export default function Footer() {
       background: 'linear-gradient(90deg, #1565C0 0%, #1E88E5 100%)',
       color: 'white',
       padding: '3rem 2rem 1.5rem',
-      marginTop: 'auto'
+      marginTop: 'auto',
+      fontFamily: "'Inter', system-ui, sans-serif"
     }}>
       {/* Main Content Section */}
       <div style={{
