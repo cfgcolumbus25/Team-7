@@ -62,13 +62,13 @@ function BarChart({ width = 800, height = 360, data = [] }) {
             y1={gy}
             x2={innerW}
             y2={gy}
-            stroke="rgba(255, 255, 255, 0.2)"
+            stroke="#e0e0e0"
             strokeDasharray="4 4"
           />
         ))}
 
         {/* axes */}
-        <line x1={0} y1={innerH} x2={innerW} y2={innerH} stroke="rgba(255, 255, 255, 0.3)" />
+        <line x1={0} y1={innerH} x2={innerW} y2={innerH} stroke="#d0d0d0" />
 
         {/* bars */}
         {data.map((d, i) => {
@@ -99,7 +99,7 @@ function BarChart({ width = 800, height = 360, data = [] }) {
                 <text
                   x={x + barW * 0.35}
                   y={y - 10}
-                  fill="#ffffff"
+                  fill="#000000"
                   fontSize={14}
                   fontWeight={700}
                   textAnchor="middle"
@@ -110,7 +110,7 @@ function BarChart({ width = 800, height = 360, data = [] }) {
               <text
                 x={x + barW * 0.35}
                 y={innerH + 24}
-                fill="rgba(255, 255, 255, 0.7)"
+                fill="#666666"
                 fontSize={14}
                 textAnchor="middle"
               >
@@ -174,7 +174,7 @@ export default function AdminDashboard() {
       style={{
         minHeight: "100vh",
         background: "transparent",
-        color: "#ffffff",
+        color: "#000000",
         display: "grid",
         gridTemplateColumns: "520px 1fr",
         gap: 24,
@@ -185,7 +185,7 @@ export default function AdminDashboard() {
       <aside
         style={{
           background: "transparent",
-          border: "1px solid rgba(255, 255, 255, 0.2)",
+          border: "1px solid #e0e0e0",
           borderRadius: 12,
           padding: 28,
         }}
@@ -205,13 +205,13 @@ export default function AdminDashboard() {
             }}
             style={{ borderRadius: "50%", objectFit: "cover" }}
           />
-          <h1 style={{ margin: "20px 0 0", fontSize: 32, fontWeight: 800, color: "#ffffff" }}>{username}</h1>
+          <h1 style={{ margin: "20px 0 0", fontSize: 32, fontWeight: 800, color: "#000000" }}>{username}</h1>
         </div>
 
-        <hr style={{ margin: "24px 0", border: 0, height: 1, background: "rgba(255, 255, 255, 0.2)" }} />
+        <hr style={{ margin: "24px 0", border: 0, height: 1, background: "#e0e0e0" }} />
 
         <div>
-          <div style={{ fontWeight: 700, fontSize: 20, marginBottom: 16, color: "#ffffff" }}>Achievements</div>
+          <div style={{ fontWeight: 700, fontSize: 20, marginBottom: 16, color: "#000000" }}>Achievements</div>
           <div style={{ display: "flex", gap: 20 }}>
             <div className="achv" style={{ position: "relative" }}>
               <Tooltip label="Board Member – Golf Charity Classic">
@@ -243,29 +243,29 @@ export default function AdminDashboard() {
       <main
         style={{
           background: "transparent",
-          border: "1px solid rgba(255, 255, 255, 0.2)",
+          border: "1px solid #e0e0e0",
           borderRadius: 12,
           padding: 28,
         }}
       >
         <div>
-          <h2 style={{ margin: 0, fontSize: 32, fontWeight: 800, color: "#ffffff" }}>Donation History</h2>
-          <div style={{ color: "rgba(255, 255, 255, 0.7)", marginTop: 6 }}>Annual contributions over time</div>
+          <h2 style={{ margin: 0, fontSize: 32, fontWeight: 800, color: "#000000" }}>Donation History</h2>
+          <div style={{ color: "#666666", marginTop: 6 }}>Annual contributions over time</div>
         </div>
         <div style={{ marginTop: 18 }}>
           <BarChart data={donations} />
         </div>
 
         {/* Footer stats */}
-        <hr style={{ margin: "18px 0 18px", border: 0, height: 1, background: "rgba(255, 255, 255, 0.2)" }} />
+        <hr style={{ margin: "18px 0 18px", border: 0, height: 1, background: "#e0e0e0" }} />
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
           <div>
-            <div style={{ color: "rgba(255, 255, 255, 0.7)" }}>Total Donated</div>
-            <div style={{ fontWeight: 900, fontSize: 28, color: "#ffffff" }}>{total.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</div>
+            <div style={{ color: "#666666" }}>Total Donated</div>
+            <div style={{ fontWeight: 900, fontSize: 28, color: "#000000" }}>{total.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</div>
           </div>
           <div>
-            <div style={{ color: "rgba(255, 255, 255, 0.7)" }}>Years Active</div>
-            <div style={{ fontWeight: 900, fontSize: 28, color: "#ffffff" }}>{yearsActive}</div>
+            <div style={{ color: "#666666" }}>Years Active</div>
+            <div style={{ fontWeight: 900, fontSize: 28, color: "#000000" }}>{yearsActive}</div>
           </div>
         </div>
       </main>
@@ -276,7 +276,7 @@ export default function AdminDashboard() {
         style={{
           marginTop: 40,
           background: 'transparent',
-          borderTop: '1px solid rgba(255, 255, 255, 0.2)',
+          borderTop: '1px solid #e0e0e0',
           padding: '32px 24px 80px',
         }}
       >
@@ -294,14 +294,14 @@ export default function AdminDashboard() {
           <div
             style={{
               background: 'transparent',
-              border: '1px solid rgba(255, 255, 255, 0.2)',
+              border: '1px solid #e0e0e0',
               borderRadius: 12,
               padding: 28,
               position: 'relative',
             }}
           >
-            <h3 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#ffffff' }}>Automatically Add Research</h3>
-            <p style={{ margin: '10px 0 18px', color: 'rgba(255, 255, 255, 0.7)', fontSize: 14 }}>
+            <h3 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#000000' }}>Automatically Add Research</h3>
+            <p style={{ margin: '10px 0 18px', color: '#666666', fontSize: 14 }}>
               Upload a PDF or paste text to ingest and summarize research data. The structured
               summary will appear to the right.
             </p>
@@ -315,7 +315,7 @@ export default function AdminDashboard() {
                   setUploadError(null);
                 }}
                 style={{
-                  color: '#ffffff',
+                  color: '#000000',
                   fontSize: 14,
                 }}
               />
@@ -327,12 +327,12 @@ export default function AdminDashboard() {
                   width: '100%',
                   fontFamily: 'inherit',
                   fontSize: 14,
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  border: '1px solid #e0e0e0',
                   borderRadius: 8,
                   padding: 10,
                   outline: 'none',
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  color: '#ffffff',
+                  background: '#ffffff',
+                  color: '#000000',
                 }}
                 className="dashboard-textarea"
                 onChange={(e) => {
@@ -407,7 +407,7 @@ export default function AdminDashboard() {
                   Upload complete. See parsed output to the right.
                 </div>
               )}
-              <small style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+              <small style={{ color: '#666666' }}>
                 Supported: PDF (extracted text) or pasted raw text. Large files will be chunked
                 server‑side.
               </small>
@@ -417,7 +417,7 @@ export default function AdminDashboard() {
           <div
             style={{
               background: 'transparent',
-              border: '1px solid rgba(255, 255, 255, 0.2)',
+              border: '1px solid #e0e0e0',
               borderRadius: 12,
               padding: 28,
               minHeight: 380,
@@ -428,15 +428,15 @@ export default function AdminDashboard() {
             }}
           >
             {!uploadResult && !uploading && (
-              <div style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+              <div style={{ color: '#666666' }}>
                 Parsed research JSON will appear here after a successful upload.
               </div>
             )}
             {uploading && (
-              <div style={{ color: '#ffffff' }}>Processing upload…</div>
+              <div style={{ color: '#000000' }}>Processing upload…</div>
             )}
             {uploadResult && (
-              <code style={{ color: '#ffffff' }}>{JSON.stringify(uploadResult, null, 2)}</code>
+              <code style={{ color: '#000000' }}>{JSON.stringify(uploadResult, null, 2)}</code>
             )}
           </div>
         </div>
