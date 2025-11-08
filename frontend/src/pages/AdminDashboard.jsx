@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ResearchTileCard } from "../components/ResearchTimeline.jsx";
 import { useUser } from "../contexts/UserContext.jsx";
 import { researchAPI } from "../services/api.js";
+import USEventsMap from "../components/USEventsMap.jsx";
 
 // Animated tooltip component for achievements (scale from image)
 function Tooltip({ label, children }) {
@@ -683,6 +684,17 @@ export default function AdminDashboard() {
               </div>
             </div>
           </div>
+
+          {/* US Events Map */}
+          <hr
+            style={{
+              margin: "24px 0 18px",
+              border: 0,
+              height: 1,
+              background: "#e0e0e0",
+            }}
+          />
+          <USEventsMap />
         </main>
       </div>
       {/* Admin-only panel at bottom */}
