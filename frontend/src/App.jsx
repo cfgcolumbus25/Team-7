@@ -1,6 +1,7 @@
 import { BrowserRouter, Outlet, Route, Routes } from "react-router-dom";
 import Overview from "./pages/Overview.jsx";
 import AdminDashboard from "./pages/AdminDashboard.jsx";
+import SignIn from "./pages/SignIn.jsx";
 import Header from "./components/header.jsx";
 import NavBar from "./components/NavBar.jsx";
 
@@ -26,6 +27,7 @@ export default function App() {
         <Route path="/" element={<Layout />}>
           <Route index element={<Overview />} />
           <Route path="admin" element={<AdminDashboard />} />
+          <Route path="signin" element={<SignIn />} />
         </Route>
       </Routes>
     </BrowserRouter>
