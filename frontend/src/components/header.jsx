@@ -1,5 +1,5 @@
-import { Link, useNavigate } from 'react-router-dom';
-import { useUser } from '../contexts/UserContext.jsx';
+import { Link, useNavigate } from "react-router-dom";
+import { useUser } from "../contexts/UserContext.jsx";
 
 export default function Header() {
   const navigate = useNavigate();
@@ -8,7 +8,7 @@ export default function Header() {
   const handleSignOut = () => {
     logout();
     // Redirect to home page
-    navigate('/');
+    navigate("/");
   };
 
   return (
@@ -104,17 +104,27 @@ export default function Header() {
       </div>
 
       <div className="header-logo">
-        <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
-          <img 
-            src="/Lilabean-Logo-Transparent.png" 
-            alt="Lilabean Foundation" 
-            style={{ height: '80px', width: 'auto' }}
+        <a
+          href="https://www.lilabeanfoundation.com/"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            textDecoration: "none",
+            display: "flex",
+            alignItems: "center",
+          }}
+          aria-label="Lilabean Foundation website"
+        >
+          <img
+            src="/Lilabean-Logo-Transparent.png"
+            alt="Lilabean Foundation"
+            style={{ height: "80px", width: "auto" }}
           />
-        </Link>
+        </a>
       </div>
 
       <div className="header-actions">
-        <Link to="/donate" style={{ textDecoration: 'none' }}>
+        <Link to="/donate" style={{ textDecoration: "none" }}>
           <button className="donate-btn">Donate</button>
         </Link>
         {user.isAuthenticated ? (
@@ -122,7 +132,7 @@ export default function Header() {
             Sign Out
           </button>
         ) : (
-          <Link to="/signin" style={{ textDecoration: 'none' }}>
+          <Link to="/signin" style={{ textDecoration: "none" }}>
             <button className="sign-in-btn">Sign In</button>
           </Link>
         )}
