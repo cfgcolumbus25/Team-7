@@ -1,13 +1,16 @@
 import os
 import io
 import json
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import List, Optional
+import logging
 
 from flask import Flask, request, jsonify
 from werkzeug.middleware.proxy_fix import ProxyFix
 from pydantic import BaseModel, Field, ValidationError
 from pypdf import PdfReader
+from dotenv import load_dotenv
+load_dotenv()
 
 # --- Gemini (Google Generative AI) ---
 # pip install google-generativeai
@@ -33,9 +36,20 @@ def apply_cors(resp):
 def preflight():
     return ("", 204)
 
+# ----------------- Logging -----------------
+logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
+LOG_JSON = os.getenv("LOG_JSON", "0") in {"1", "true", "True", "YES", "yes"}
+
 # ----------------- Gemini client -----------------
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "DUMMY_FOR_TESTS")
-genai.configure(api_key=GEMINI_API_KEY)
+# Some versions of the google.generativeai package may not export a top-level
+# `configure` symbol; use getattr to call it when available, otherwise set an
+# environment variable the library can consume.
+_configure = getattr(genai, "configure", None)
+if callable(_configure):
+    _configure(api_key=GEMINI_API_KEY)
+else:
+    os.environ.setdefault("GOOGLE_API_KEY", GEMINI_API_KEY)
 
 # Prefer 1.5 Pro (or 1.5 Flash if you want cheaper/faster)
 GEMINI_MODEL_NAME = os.getenv("GEMINI_MODEL_NAME", "gemini-1.5-pro")
@@ -47,9 +61,10 @@ _generation_config = {
 }
 # You can add safety_settings here if desired.
 
-model = genai.GenerativeModel(
+# Some static analyzers may not recognize GenerativeModel on certain stub versions.
+model = genai.GenerativeModel(  # type: ignore[attr-defined]
     model_name=GEMINI_MODEL_NAME,
-    generation_config=_generation_config,
+    generation_config=_generation_config,  # type: ignore[arg-type]
 )
 
 # ----------------- Schema (Pydantic) -----------------
@@ -139,10 +154,76 @@ def build_user_prompt(content: str) -> str:
 def call_llm_json(content: str) -> dict:
     prompt = build_user_prompt(content)
     # For single-turn requests, generate_content with a single string is fine.
-    resp = model.generate_content(prompt)
+    try:
+        resp = model.generate_content(prompt)
+    except Exception as e:
+        # If the model is unavailable or unsupported, attempt a one-time fallback.
+        msg = str(e)
+        triggers = ("not found", "404", "not supported for generateContent")
+        if any(t in msg for t in triggers):
+            fb = _select_fallback_model_name()
+            if fb:
+                logging.warning("Model '%s' failed (%s). Falling back to '%s'", GEMINI_MODEL_NAME, msg, fb)
+                alt = genai.GenerativeModel(  # type: ignore[attr-defined]
+                    model_name=_normalize_model_id(fb),
+                    generation_config=_generation_config,  # type: ignore[arg-type]
+                )
+                resp = alt.generate_content(prompt)
+            else:
+                raise
+        else:
+            raise
     # Gemini returns the JSON string in resp.text when response_mime_type="application/json"
     raw = resp.text or "{}"
     return json.loads(raw)
+
+def _normalize_model_id(name: str) -> str:
+    # Accept both "models/gemini-1.5-flash" and "gemini-1.5-flash"; prefer bare id for calls
+    return name.split("/")[-1] if "/" in name else name
+
+def _select_fallback_model_name() -> Optional[str]:
+    """Return a usable model id that supports generateContent, preferring 1.5 flash/pro.
+    Does not raise; returns None if discovery fails.
+    """
+    try:
+        lister = getattr(genai, "list_models", None)
+        if not callable(lister):
+            return None
+        result = lister()
+        # Be permissive across SDK variants
+        models = []
+        if isinstance(result, list):
+            models = result
+        else:
+            maybe = getattr(result, "models", None)
+            if isinstance(maybe, list):
+                models = maybe
+            else:
+                # Last resort: attempt to iterate if possible
+                try:
+                    models = [m for m in result]  # type: ignore
+                except Exception:
+                    models = []
+        candidates = []
+        for m in models:
+            methods = getattr(m, "supported_generation_methods", None) or getattr(m, "generation_methods", [])
+            if methods and ("generateContent" in methods or "generate_content" in methods):
+                candidates.append(m.name)
+        if not candidates:
+            return None
+        # Prefer newer 1.5 variants, flash, then pro
+        def score(n: str) -> tuple:
+            nid = _normalize_model_id(n)
+            return (
+                0 if "1.5" in nid else 1,
+                0 if "flash" in nid else 1,
+                0 if "pro" in nid else 1,
+                nid,
+            )
+        candidates.sort(key=score)
+        return candidates[0]
+    except Exception:
+        return None
 
 def merge_partials(parts: List[dict]) -> dict:
     out = {"project_year": None, "projects": [], "global_notes": []}
@@ -182,9 +263,14 @@ def ingest_and_summarize():
                 text = raw_text
             elif "file" in request.files:
                 f = request.files["file"]
-                if not f or f.mimetype != "application/pdf":
+                if not f:
+                    return jsonify({"error":"Provide raw_text or a PDF file"}), 400
+                # Be lenient on mimetype; some clients send octet-stream. Try to parse as PDF.
+                file_bytes = f.read()
+                try:
+                    text = pdf_to_text(file_bytes)
+                except Exception:
                     return jsonify({"error":"Only PDF or raw_text supported"}), 400
-                text = pdf_to_text(f.read())
             else:
                 return jsonify({"error":"Provide raw_text or a PDF file"}), 400
 
@@ -215,6 +301,10 @@ def ingest_and_summarize():
         except ValidationError as ve:
             return jsonify({"error":"LLM JSON validation failed", "details": json.loads(ve.json())}), 502
 
+        # Optional: Print the final JSON to terminal for testing if LOG_JSON=1
+        if LOG_JSON:
+            logging.info("OutputPayload JSON:\n%s", json.dumps(parsed.model_dump(), indent=2))
+
         return jsonify(parsed.model_dump())
 
     except Exception as e:
@@ -222,7 +312,7 @@ def ingest_and_summarize():
 
 @app.get("/health")
 def health():
-    return jsonify({"ok": True, "time": datetime.utcnow().isoformat()})
+    return jsonify({"ok": True, "time": datetime.now(UTC).isoformat()})
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", "8000")), debug=True)
