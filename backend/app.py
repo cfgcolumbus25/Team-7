@@ -1,20 +1,37 @@
 import os
 import io
+import re
 import json
-from datetime import datetime, UTC
-from typing import List, Optional
-import logging
+from datetime import datetime
+from typing import List, Optional, Tuple
 
 from flask import Flask, request, jsonify
 from werkzeug.middleware.proxy_fix import ProxyFix
-from pydantic import BaseModel, Field, ValidationError
-from pypdf import PdfReader
-from dotenv import load_dotenv
-load_dotenv()
+from pydantic import BaseModel, Field, ValidationError, field_validator
 
-# --- Gemini (Google Generative AI) ---
-# pip install google-generativeai
+# --- env (so you can keep GEMINI_API_KEY in .env) ---
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except Exception:
+    pass
+
+# --- Gemini ---
 import google.generativeai as genai
+
+# Prefer 1.5 Pro (or 1.5 Flash if you want cheaper/faster)
+GEMINI_MODEL_NAME = os.getenv("GEMINI_MODEL_NAME", "gemini-2.5-flash")
+genai.configure(api_key=os.getenv("GEMINI_API_KEY", "DUMMY_FOR_TESTS"))
+model = genai.GenerativeModel(
+    model_name=GEMINI_MODEL_NAME,
+    generation_config={
+        "temperature": 0.2,
+        "response_mime_type": "application/json",  # JSON mode
+    },
+)
+
+# --- PDF extraction (PyMuPDF) ---
+import fitz  # PyMuPDF
 
 # ----------------- Flask setup -----------------
 app = Flask(__name__)
@@ -36,37 +53,6 @@ def apply_cors(resp):
 def preflight():
     return ("", 204)
 
-# ----------------- Logging -----------------
-logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
-LOG_JSON = os.getenv("LOG_JSON", "0") in {"1", "true", "True", "YES", "yes"}
-
-# ----------------- Gemini client -----------------
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "DUMMY_FOR_TESTS")
-# Some versions of the google.generativeai package may not export a top-level
-# `configure` symbol; use getattr to call it when available, otherwise set an
-# environment variable the library can consume.
-_configure = getattr(genai, "configure", None)
-if callable(_configure):
-    _configure(api_key=GEMINI_API_KEY)
-else:
-    os.environ.setdefault("GOOGLE_API_KEY", GEMINI_API_KEY)
-
-# Prefer 1.5 Pro (or 1.5 Flash if you want cheaper/faster)
-GEMINI_MODEL_NAME = os.getenv("GEMINI_MODEL_NAME", "gemini-1.5-pro")
-
-# Set JSON output
-_generation_config = {
-    "temperature": 0.2,
-    "response_mime_type": "application/json",
-}
-# You can add safety_settings here if desired.
-
-# Some static analyzers may not recognize GenerativeModel on certain stub versions.
-model = genai.GenerativeModel(  # type: ignore[attr-defined]
-    model_name=GEMINI_MODEL_NAME,
-    generation_config=_generation_config,  # type: ignore[arg-type]
-)
-
 # ----------------- Schema (Pydantic) -----------------
 class FundUsage(BaseModel):
     amount_numeric: Optional[float] = None
@@ -78,42 +64,33 @@ class FundUsage(BaseModel):
 
 class Project(BaseModel):
     title: str
+    trial_id: str = ""             # <-- keep this as string; empty if unknown
     layman_summary: str
     fund_usage: FundUsage
     future_goals: List[str] = Field(default_factory=list)
     timeline_snippet: str
+
+    @field_validator("trial_id", mode="before")
+    @classmethod
+    def _coerce_trial_id(cls, v):
+        if v is None:
+            return ""
+        v = str(v).strip()
+        v = re.sub(r"[\s-]+", "", v.upper())
+        return v
 
 class OutputPayload(BaseModel):
     project_year: Optional[int] = None
     projects: List[Project] = Field(default_factory=list)
     global_notes: List[str] = Field(default_factory=list)
 
-# ----------------- Helpers -----------------
-CHUNK_CHARS = 8000
-CHUNK_OVERLAP = 600
-
-def chunk_text(s: str, max_chars=CHUNK_CHARS, overlap=CHUNK_OVERLAP):
-    s = s.strip()
-    if len(s) <= max_chars:
-        return [s]
-    parts, i = [], 0
-    while i < len(s):
-        parts.append(s[i:min(i+max_chars, len(s))])
-        i += (max_chars - overlap)
-    return parts
-
-def pdf_to_text(file_bytes: bytes) -> str:
-    reader = PdfReader(io.BytesIO(file_bytes))
-    pages = []
-    for i, page in enumerate(reader.pages):
-        pages.append(f"[PDF p{i+1}] {page.extract_text() or ''}")
-    return "\n\n".join(pages)
-
+# This is the schema we ask the model to follow (strings "" when missing; only numerics can be null)
 SCHEMA_JSON = """{
   "project_year": null,
   "projects": [
     {
       "title": "",
+      "trial_id": "",
       "layman_summary": "",
       "fund_usage": {
         "amount_numeric": null,
@@ -135,106 +112,252 @@ SYSTEM_PROMPT = (
   "Convert technical text into accurate, concise lay language for donors."
 )
 
-def build_user_prompt(content: str) -> str:
-    # Gemini doesn't require role separation; we compose a single instruction string.
-    return "\n\n".join([
-      SYSTEM_PROMPT,
-      "",
-      "Return STRICT JSON matching the schema exactly. If info is missing, keep keys with null/empty values.",
-      "If multiple passages cover the same project, consolidate into one project entry. "
-      "On conflicting amounts, prefer the most recent source_date (if present) and put alternatives in global_notes.",
-      f"SCHEMA:\n{SCHEMA_JSON}",
-      "STYLE:\n- Layman summaries: 2–6 sentences, no jargon.\n"
-      "- Fund usage: extract numeric amount, display string, period, org, purpose.\n"
-      "- Future goals: concrete, short phrases.\n"
-      "- timeline_snippet: 1–3 sentences for a donor timeline card.",
-      f"CONTENT:\n{content}"
-    ])
+# ----------------- Helpers -----------------
+CHUNK_CHARS = 6500
+CHUNK_OVERLAP = 500
 
-def call_llm_json(content: str) -> dict:
-    prompt = build_user_prompt(content)
-    # For single-turn requests, generate_content with a single string is fine.
-    try:
-        resp = model.generate_content(prompt)
-    except Exception as e:
-        # If the model is unavailable or unsupported, attempt a one-time fallback.
-        msg = str(e)
-        triggers = ("not found", "404", "not supported for generateContent")
-        if any(t in msg for t in triggers):
-            fb = _select_fallback_model_name()
-            if fb:
-                logging.warning("Model '%s' failed (%s). Falling back to '%s'", GEMINI_MODEL_NAME, msg, fb)
-                alt = genai.GenerativeModel(  # type: ignore[attr-defined]
-                    model_name=_normalize_model_id(fb),
-                    generation_config=_generation_config,  # type: ignore[arg-type]
-                )
-                resp = alt.generate_content(prompt)
+def chunk_text(s: str, max_chars=CHUNK_CHARS, overlap=CHUNK_OVERLAP):
+    s = s.strip()
+    if len(s) <= max_chars:
+        return [s]
+    parts, i = [], 0
+    while i < len(s):
+        parts.append(s[i:min(i+max_chars, len(s))])
+        i += (max_chars - overlap)
+    return parts
+
+def pdf_to_text(file_bytes: bytes) -> str:
+    """Layout-aware text with page markers so the model can reference pages."""
+    parts = []
+    with fitz.open(stream=file_bytes, filetype="pdf") as doc:
+        for i, page in enumerate(doc, start=1):
+            t = page.get_text("text") or ""
+            parts.append(f"[PDF p{i}]\n{t}")
+    return normalize_text("\n\n".join(parts))
+
+def normalize_text(s: str) -> str:
+    # unwrap hyphenation across newlines: "medullo-\nblastoma" -> "medulloblastoma"
+    s = re.sub(r"-\s*\n\s*", "", s)
+    # join single line breaks inside paragraphs (keep blank lines)
+    s = re.sub(r"([^\n])\n(?!\n)", r"\1 ", s)
+    # fix spaced thousands: "90, 000" -> "90,000"; "100 000" -> "100,000"
+    s = re.sub(r"(?<=\d),(?:\s+)(?=\d{3})", ",", s)
+    s = re.sub(r"(?<=\d)\s(?=\d{3}\b)", ",", s)
+    # collapse multi-spaces
+    s = re.sub(r"[ \t]{2,}", " ", s)
+    return s.strip()
+
+# --- general extractors for trial_id + plausible grant amount ---
+TRIAL_ID_RE = re.compile(r"\b(PNOC|NCT|PBTC|COG)\s*[-]?\s*\d+\b", re.I)
+MONEY_TOKEN_RE = re.compile(
+    r"(?i)(\$?\s?\d{1,3}(?:[,\s]\d{3})+(?:\.\d{2})?|\$\s?\d+|\d{4,})(?:\s*(?:USD|dollars|over\s+\d+\s+years?)?)"
+)
+TOTAL_BUDGET_CUES = re.compile(r"(?i)\b(total (project )?budget|subtotal|indirects|overhead|total:)\b")
+GRANT_CUES = re.compile(r"(?i)\b(grant amount|grant:|awarded|provided by|funded by|our (?:foundation|nonprofit)|we (?:will|plan to) fund|committed)\b")
+
+def extract_trial_id(text: str) -> str:
+    m = TRIAL_ID_RE.search(text)
+    if not m:
+        return ""
+    return re.sub(r"[\s-]+", "", m.group(0).upper())  # PNOC044, NCT0123456
+
+def _normalize_money_token(tok: str) -> str:
+    tok = tok.strip()
+    if not tok.startswith("$"):
+        # add $ to naked numbers >= 4 digits (e.g., 781000)
+        if re.fullmatch(r"\d{4,}(?:\.\d{2})?", tok):
+            tok = "$" + tok
+    tok = tok.replace(" ", "")
+    if re.fullmatch(r"\$\d{4,}(?:\.\d{2})?", tok) and "," not in tok:
+        num = tok[1:]
+        try:
+            if "." in num:
+                left, right = num.split(".")
+                left = f"{int(left):,}"
+                tok = f"${left}.{right}"
             else:
-                raise
-        else:
-            raise
-    # Gemini returns the JSON string in resp.text when response_mime_type="application/json"
-    raw = resp.text or "{}"
-    return json.loads(raw)
+                tok = f"${int(num):,}"
+        except Exception:
+            pass
+    return tok
 
-def _normalize_model_id(name: str) -> str:
-    # Accept both "models/gemini-1.5-flash" and "gemini-1.5-flash"; prefer bare id for calls
-    return name.split("/")[-1] if "/" in name else name
-
-def _select_fallback_model_name() -> Optional[str]:
-    """Return a usable model id that supports generateContent, preferring 1.5 flash/pro.
-    Does not raise; returns None if discovery fails.
-    """
+def _money_to_numeric(tok: str) -> Optional[float]:
+    digits = re.sub(r"[^\d.]", "", tok or "")
+    if not digits:
+        return None
     try:
-        lister = getattr(genai, "list_models", None)
-        if not callable(lister):
-            return None
-        result = lister()
-        # Be permissive across SDK variants
-        models = []
-        if isinstance(result, list):
-            models = result
-        else:
-            maybe = getattr(result, "models", None)
-            if isinstance(maybe, list):
-                models = maybe
-            else:
-                # Last resort: attempt to iterate if possible
-                try:
-                    models = [m for m in result]  # type: ignore
-                except Exception:
-                    models = []
-        candidates = []
-        for m in models:
-            methods = getattr(m, "supported_generation_methods", None) or getattr(m, "generation_methods", [])
-            if methods and ("generateContent" in methods or "generate_content" in methods):
-                candidates.append(m.name)
-        if not candidates:
-            return None
-        # Prefer newer 1.5 variants, flash, then pro
-        def score(n: str) -> tuple:
-            nid = _normalize_model_id(n)
-            return (
-                0 if "1.5" in nid else 1,
-                0 if "flash" in nid else 1,
-                0 if "pro" in nid else 1,
-                nid,
-            )
-        candidates.sort(key=score)
-        return candidates[0]
+        return float(digits)
     except Exception:
         return None
 
-def merge_partials(parts: List[dict]) -> dict:
-    out = {"project_year": None, "projects": [], "global_notes": []}
-    for p in parts:
-        if out["project_year"] is None and p.get("project_year"):
-            out["project_year"] = p["project_year"]
-        if isinstance(p.get("projects"), list):
-            out["projects"].extend(p["projects"])
-        if isinstance(p.get("global_notes"), list):
-            out["global_notes"].extend(p["global_notes"])
-    return out
+def choose_grant_amount(text: str) -> Tuple[str, Optional[float]]:
+    """
+    Heuristic: scan lines. Prefer amounts on lines with 'grant/awarded/provided/funded/committed'.
+    Downrank lines that look like total project budget/indirects.
+    Return (amount_display, amount_numeric) or ("", None) if nothing plausible.
+    """
+    best = None  # (display, numeric, score)
+    for raw_line in text.splitlines():
+        line = raw_line.strip()
+        if not line:
+            continue
+        toks = [t.group(0) for t in MONEY_TOKEN_RE.finditer(line)]
+        if not toks:
+            continue
+        score = 0
+        if GRANT_CUES.search(line):
+            score += 3
+        if TOTAL_BUDGET_CUES.search(line):
+            score -= 2
+        if re.search(r"(?i)\bgrant\b", line):
+            score += 1
+        for tok in toks:
+            disp = _normalize_money_token(tok)
+            val = _money_to_numeric(disp)
+            if val and val < 1_000:
+                continue
+            cand = (disp, val, score)
+            if best is None:
+                best = cand
+            else:
+                if cand[2] > best[2] or (cand[2] == best[2] and (cand[1] or 0) > (best[1] or 0)):
+                    best = cand
+    if best:
+        return best[0], best[1]
+    return "", None
+
+def make_hints_for_any_text(text: str, label: str = "", sdate: str = "") -> dict:
+    trial_id = extract_trial_id(text)
+    amount_display, amount_numeric = choose_grant_amount(text)
+    return {
+        "trial_id": trial_id,                    # e.g., "PNOC044" or ""
+        "grant_amount": {
+            "amount_display": amount_display,    # "$340,000 over two years" or ""
+            "amount_numeric": amount_numeric     # 340000.0 or null
+        },
+        "source": {"label": label or "", "date": sdate or ""}
+    }
+
+# --- prompt building + LLM call ---
+def build_user_prompt(content: str, hints: dict) -> str:
+    return "\n\n".join([
+      SYSTEM_PROMPT,
+      "",
+      "Return STRICT JSON matching the schema exactly. If info is missing, keep string fields as empty strings \"\" and numeric fields as null.",
+      "CRITICAL RULES:",
+      "1) Include `trial_id` if present in CONTENT or HINTS (e.g., PNOC044, NCT######).",
+      "2) If multiple passages describe the SAME trial_id, MERGE into a single project entry.",
+      "3) Do NOT invent amounts. If HINTS.grant_amount is provided and not contradicted by CONTENT, use it.",
+      "4) Fund usage: set both amount_numeric and amount_display when a grant amount is present; otherwise leave blank/null.",
+      f"SCHEMA:\n{SCHEMA_JSON}",
+      "STYLE:\n- Layman summaries: 2–6 sentences, no jargon.\n"
+      "- Fund usage: extract numeric amount, display string, period, org, purpose if present; otherwise leave blank.\n"
+      "- Future goals: concrete, short phrases.\n"
+      "- timeline_snippet: 1–3 sentences for a donor timeline card.",
+      f"HINTS:\n{json.dumps(hints or {}, indent=2)}",
+      f"CONTENT:\n{content}"
+    ])
+
+def _extract_json_from_gemini(resp) -> str:
+    raw = getattr(resp, "text", None)
+    if raw:
+        return raw
+    # fallback: walk candidates
+    for cand in getattr(resp, "candidates", []) or []:
+        content = getattr(cand, "content", None)
+        parts = getattr(content, "parts", None) if content else None
+        if parts:
+            for p in parts:
+                t = getattr(p, "text", None)
+                if t:
+                    return t
+    return ""
+
+def call_llm_json(content: str, hints: dict) -> dict:
+    prompt = build_user_prompt(content, hints)
+    for _ in range(2):  # one retry if JSON is malformed/empty
+        resp = model.generate_content(prompt)
+        raw = _extract_json_from_gemini(resp)
+        try:
+            return json.loads(raw or "{}")
+        except Exception:
+            prompt += "\n\nRespond with VALID JSON ONLY. No commentary."
+    return {"project_year": None, "projects": [], "global_notes": ["Model failed to return valid JSON."]}
+
+# --- sanitize + optional dedupe ---
+def _sanitize_llm_output(raw_out: dict) -> dict:
+    """Coerce nulls to strings where needed and normalize fields."""
+    if not isinstance(raw_out, dict):
+        return {"project_year": None, "projects": [], "global_notes": []}
+
+    projects = raw_out.get("projects") or []
+    cleaned = []
+    for p in projects:
+        if not isinstance(p, dict):
+            continue
+        for key in ("title", "trial_id", "layman_summary", "timeline_snippet"):
+            val = p.get(key)
+            p[key] = "" if val is None else str(val)
+
+        # normalize trial_id format
+        if p["trial_id"]:
+            p["trial_id"] = re.sub(r"[\s-]+", "", p["trial_id"].upper())
+
+        fu = p.get("fund_usage") or {}
+        fu.setdefault("amount_display", "")
+        fu.setdefault("currency", "USD")
+        fu.setdefault("period", "")
+        fu.setdefault("recipient_org", "")
+        fu.setdefault("purpose", "")
+        # numeric cleanup
+        if isinstance(fu.get("amount_numeric"), str):
+            digits = re.sub(r"[^\d.]", "", fu["amount_numeric"])
+            fu["amount_numeric"] = float(digits) if digits else None
+        p["fund_usage"] = fu
+
+        if not isinstance(p.get("future_goals"), list):
+            p["future_goals"] = []
+
+        cleaned.append(p)
+
+    raw_out["projects"] = cleaned
+
+    if not isinstance(raw_out.get("global_notes"), list):
+        raw_out["global_notes"] = []
+
+    if isinstance(raw_out.get("project_year"), str):
+        try:
+            raw_out["project_year"] = int(raw_out["project_year"])
+        except ValueError:
+            raw_out["project_year"] = None
+
+    return raw_out
+
+def merge_projects_by_trial_id(projects: List[dict]) -> List[dict]:
+    """Light dedupe: if multiple entries share trial_id, merge into one."""
+    by_id = {}
+    for p in projects:
+        key = p.get("trial_id", "") or p.get("title", "").lower().strip()
+        if key in by_id:
+            base = by_id[key]
+            # keep longest lay summary
+            if len(p.get("layman_summary", "")) > len(base.get("layman_summary", "")):
+                base["layman_summary"] = p["layman_summary"]
+            # union future_goals
+            base["future_goals"] = sorted(set((base.get("future_goals") or []) + (p.get("future_goals") or [])), key=str.lower)
+            # prefer non-null amount_numeric
+            bu = base.get("fund_usage") or {}
+            pu = p.get("fund_usage") or {}
+            if bu.get("amount_numeric") is None and pu.get("amount_numeric") is not None:
+                bu["amount_numeric"] = pu["amount_numeric"]
+                bu["amount_display"] = pu.get("amount_display", bu.get("amount_display",""))
+            for k in ("period", "recipient_org", "purpose"):
+                if not bu.get(k) and pu.get(k):
+                    bu[k] = pu[k]
+            base["fund_usage"] = bu
+        else:
+            by_id[key] = p
+    return list(by_id.values())
 
 # ----------------- API -----------------
 @app.route("/ingest-and-summarize", methods=["POST"])
@@ -252,25 +375,18 @@ def ingest_and_summarize():
     """
     try:
         ctype = request.headers.get("Content-Type","")
-        label = ""; sdate = ""; text = ""
+        label = (request.form.get("source_label") if "multipart/form-data" in ctype else None) or ""
+        sdate = (request.form.get("source_date") if "multipart/form-data" in ctype else None) or ""
 
         if "multipart/form-data" in ctype:
-            label = (request.form.get("source_label") or "").strip()
-            sdate = (request.form.get("source_date") or "").strip()
             raw_text = (request.form.get("raw_text") or "").strip()
-
             if raw_text:
-                text = raw_text
+                text = normalize_text(raw_text)
             elif "file" in request.files:
                 f = request.files["file"]
-                if not f:
-                    return jsonify({"error":"Provide raw_text or a PDF file"}), 400
-                # Be lenient on mimetype; some clients send octet-stream. Try to parse as PDF.
-                file_bytes = f.read()
-                try:
-                    text = pdf_to_text(file_bytes)
-                except Exception:
+                if not f or f.mimetype != "application/pdf":
                     return jsonify({"error":"Only PDF or raw_text supported"}), 400
+                text = pdf_to_text(f.read())
             else:
                 return jsonify({"error":"Provide raw_text or a PDF file"}), 400
 
@@ -281,38 +397,52 @@ def ingest_and_summarize():
             text = (data.get("raw_text") or "").strip()
             if not text:
                 return jsonify({"error":"raw_text required for JSON requests"}), 400
+            text = normalize_text(text)
+
         else:
             return jsonify({"error":"Unsupported Content-Type"}), 415
 
         if not text:
             return jsonify({"error":"No readable text found"}), 422
 
+        # provenance note + hints
         provenance = f'[SOURCE: label="{label}", date={sdate}]'
         combined = f"{provenance}\n{text}".strip()
+        hints = make_hints_for_any_text(combined, label=label, sdate=sdate)
 
         parts = chunk_text(combined)
         if len(parts) == 1:
-            raw_out = call_llm_json(parts[0])
+            raw_out = call_llm_json(parts[0], hints)
         else:
-            raw_out = merge_partials([call_llm_json(p) for p in parts])
+            # Call per chunk and merge (simple concatenation + dedupe)
+            partials = [call_llm_json(p, hints) for p in parts]
+            raw_out = {"project_year": None, "projects": [], "global_notes": []}
+            for p in partials:
+                if raw_out["project_year"] is None and p.get("project_year"):
+                    raw_out["project_year"] = p["project_year"]
+                if isinstance(p.get("projects"), list):
+                    raw_out["projects"].extend(p["projects"])
+                if isinstance(p.get("global_notes"), list):
+                    raw_out["global_notes"].extend(p["global_notes"])
+
+        # sanitize, dedupe, validate
+        raw_out = _sanitize_llm_output(raw_out)
+        if isinstance(raw_out.get("projects"), list):
+            raw_out["projects"] = merge_projects_by_trial_id(raw_out["projects"])
 
         try:
             parsed = OutputPayload.model_validate(raw_out)
         except ValidationError as ve:
             return jsonify({"error":"LLM JSON validation failed", "details": json.loads(ve.json())}), 502
 
-        # Optional: Print the final JSON to terminal for testing if LOG_JSON=1
-        if LOG_JSON:
-            logging.info("OutputPayload JSON:\n%s", json.dumps(parsed.model_dump(), indent=2))
-
-        return jsonify(parsed.model_dump())
+        return jsonify(parsed.model_dump()), 200
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 @app.get("/health")
 def health():
-    return jsonify({"ok": True, "time": datetime.now(UTC).isoformat()})
+    return jsonify({"ok": True, "time": datetime.utcnow().isoformat()})
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", "8000")), debug=True)

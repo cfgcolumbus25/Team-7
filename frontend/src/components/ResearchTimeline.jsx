@@ -1,4 +1,18 @@
-import { Box, Button, Card, CardContent, Slider, Typography } from '@mui/material';
+import React, { useState } from 'react';
+import { 
+  Slider, 
+  Box, 
+  Typography, 
+  Card, 
+  CardContent, 
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  IconButton
+} from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
 import { styled } from '@mui/material/styles';
 import React, { useState } from 'react';
 
@@ -61,6 +75,11 @@ export default function ResearchTimeline({ selectedYear, setSelectedYear }) {
   const [localYear, setLocalYear] = useState(2012);
   const currentYear = selectedYear !== undefined ? selectedYear : localYear;
   const updateYear = setSelectedYear || setLocalYear;
+export default function ResearchTimeline() {
+  // track which year the user has selected, starting at 2012
+  const [selectedYear, setSelectedYear] = useState(2012);
+  // track which tile's popup is open (null if none)
+  const [openTileId, setOpenTileId] = useState(null);
 
   // update the selected year when user moves the slider
   const handleSliderChange = (event, newValue) => {
@@ -72,6 +91,16 @@ export default function ResearchTimeline({ selectedYear, setSelectedYear }) {
   const max = 2025;
   const position = ((currentYear - min) / (max - min)) * 100;
 
+  // handle opening the popup
+  const handleOpenPopup = (tileId) => {
+    setOpenTileId(tileId);
+  };
+
+  // handle closing the popup
+  const handleClosePopup = () => {
+    setOpenTileId(null);
+  };
+
   // dummy data for research tiles - returns 2-3 tiles per year
   const getResearchTiles = (year) => {
     const tileCount = 2 + (year % 2); // 2 or 3 tiles
@@ -80,10 +109,13 @@ export default function ResearchTimeline({ selectedYear, setSelectedYear }) {
       title: `Research Project ${index + 1}`,
       impact: `Impact description for ${year}`,
       money: `$${(Math.random() * 500000 + 100000).toFixed(0)}`,
+      summary: `This research project conducted in ${year} has made significant contributions to the field. The project focused on advancing our understanding of key research areas and has resulted in measurable improvements. Through dedicated funding and collaborative efforts, we were able to achieve breakthrough results that will benefit the community for years to come.`,
     }));
   };
 
   const researchTiles = getResearchTiles(currentYear);
+  const researchTiles = getResearchTiles(selectedYear);
+  const selectedTile = researchTiles.find(tile => tile.id === openTileId);
 
   return (
     <Container>
@@ -120,13 +152,63 @@ export default function ResearchTimeline({ selectedYear, setSelectedYear }) {
               <Typography variant="h6" color="primary" sx={{ mb: 2, fontWeight: 'bold' }}>
                 {tile.money}
               </Typography>
-              <Button variant="outlined" size="small" fullWidth>
+              <Button 
+                variant="outlined" 
+                size="small" 
+                fullWidth
+                onClick={() => handleOpenPopup(tile.id)}
+              >
                 View More
               </Button>
             </CardContent>
           </ResearchTile>
         ))}
       </TilesGrid>
+
+      {/* Popup Dialog */}
+      <Dialog 
+        open={openTileId !== null} 
+        onClose={handleClosePopup}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ m: 0, p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          {selectedTile?.title}
+          <IconButton
+            aria-label="close"
+            onClick={handleClosePopup}
+            sx={{
+              color: (theme) => theme.palette.grey[500],
+            }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent dividers>
+          <Typography variant="body1" paragraph>
+            {selectedTile?.summary}
+          </Typography>
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+              Funding Amount:
+            </Typography>
+            <Typography variant="h6" color="primary" sx={{ fontWeight: 'bold' }}>
+              {selectedTile?.money}
+            </Typography>
+          </Box>
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+              Impact:
+            </Typography>
+            <Typography variant="body2">
+              {selectedTile?.impact}
+            </Typography>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleClosePopup}>Close</Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 }
