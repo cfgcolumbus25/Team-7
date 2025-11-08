@@ -34,17 +34,17 @@ const SliderContainer = styled(Box)(({ theme }) => ({
 // container for the slider with relative positioning for the year label
 const SliderWrapper = styled(Box)({
   position: 'relative',
-  paddingBottom: '25px', // space for the year label below
+  paddingBottom: '15px', // space for the year label below
 });
 
 // styled component for the year label positioned below the thumb
 const YearLabel = styled(Typography)(({ position }) => ({
   position: 'absolute',
-  bottom: '-15px',
+  bottom: '-5px',
   left: `calc(${position}% - 20px)`, // center the label under the thumb
   fontWeight: 'bold',
   fontSize: '1.1rem',
-  color: '#1976d2',
+  color: '#fff',
   pointerEvents: 'none',
   minWidth: '40px',
   textAlign: 'center',
@@ -58,15 +58,23 @@ const TilesGrid = styled(Box)(({ theme }) => ({
   marginTop: theme.spacing(4),
 }));
 
-// styled research tile card
+// styled research tile card with glassy effect
 const ResearchTile = styled(Card)(({ theme }) => ({
   height: '100%',
   display: 'flex',
   flexDirection: 'column',
-  transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
+  background: 'rgba(19, 55, 85, 0.3)',
+  backdropFilter: 'blur(25px) saturate(180%)',
+  WebkitBackdropFilter: 'blur(25px) saturate(180%)',
+  border: '1px solid rgba(255, 255, 255, 0.15)',
+  borderRadius: '20px',
+  transition: 'all 0.3s ease-in-out',
+  boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.05) inset',
   '&:hover': {
-    transform: 'translateY(-4px)',
-    boxShadow: theme.shadows[6],
+    transform: 'translateY(-8px)',
+    boxShadow: '0 12px 48px rgba(19, 55, 85, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1) inset',
+    background: 'rgba(19, 55, 85, 0.4)',
+    border: '1px solid rgba(255, 255, 255, 0.25)',
   },
 }));
 
@@ -155,8 +163,19 @@ export default function ResearchTimeline({ selectedYear, setSelectedYear }) {
 
   return (
     <Container>
-      <Typography variant="h4" component="h2" gutterBottom sx={{ mb: 4, fontWeight: 'bold', textAlign: 'center' }}>
-        View Donor Impact
+      <Typography 
+        variant="h4" 
+        component="h2" 
+        gutterBottom 
+        sx={{ 
+          mb: 4, 
+          fontWeight: 'bold', 
+          textAlign: 'center',
+          color: '#fff',
+          textShadow: '0 0 20px rgba(19, 55, 85, 0.5)',
+        }}
+      >
+        VIEW DONOR IMPACT
       </Typography>
 
       <SliderContainer>
@@ -168,6 +187,24 @@ export default function ResearchTimeline({ selectedYear, setSelectedYear }) {
             max={2025}
             step={1}
             valueLabelDisplay="off"
+            sx={{
+              color: '#FFEAA7', // butter yellow
+              '& .MuiSlider-thumb': {
+                backgroundColor: '#FFEAA7',
+                border: '2px solid rgba(255, 234, 167, 0.8)',
+                boxShadow: '0 0 10px rgba(255, 234, 167, 0.5)',
+                '&:hover': {
+                  boxShadow: '0 0 15px rgba(255, 234, 167, 0.7)',
+                },
+              },
+              '& .MuiSlider-track': {
+                backgroundColor: '#FFEAA7',
+                border: 'none',
+              },
+              '& .MuiSlider-rail': {
+                backgroundColor: 'rgba(255, 234, 167, 0.3)',
+              },
+            }}
           />
           <YearLabel position={position}>
             {currentYear}
@@ -179,13 +216,13 @@ export default function ResearchTimeline({ selectedYear, setSelectedYear }) {
         {researchTiles.map((tile) => (
           <ResearchTile key={tile.id}>
             <CardContent sx={{ flexGrow: 1 }}>
-              <Typography variant="h6" component="h3" gutterBottom sx={{ fontWeight: 'bold' }}>
+              <Typography variant="h6" component="h3" gutterBottom sx={{ fontWeight: 'bold', color: '#fff' }}>
                 {tile.title}
               </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              <Typography variant="body2" sx={{ mb: 2, color: 'rgba(255, 255, 255, 0.7)' }}>
                 {tile.impact}
               </Typography>
-              <Typography variant="h6" color="primary" sx={{ mb: 2, fontWeight: 'bold' }}>
+              <Typography variant="h6" sx={{ mb: 2, fontWeight: 'bold', color: '#64b5f6', textShadow: '0 0 10px rgba(100, 181, 246, 0.5)' }}>
                 {tile.money}
               </Typography>
               <Button 
@@ -193,6 +230,19 @@ export default function ResearchTimeline({ selectedYear, setSelectedYear }) {
                 size="small" 
                 fullWidth
                 onClick={() => handleOpenPopup(tile.id)}
+                sx={{
+                  background: 'rgba(19, 55, 85, 0.4)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  color: '#fff',
+                  backdropFilter: 'blur(10px)',
+                  WebkitBackdropFilter: 'blur(10px)',
+                  borderRadius: '20px',
+                  '&:hover': {
+                    background: 'rgba(19, 55, 85, 0.6)',
+                    border: '1px solid rgba(255, 255, 255, 0.3)',
+                    boxShadow: '0 4px 16px rgba(19, 55, 85, 0.5)',
+                  }
+                }}
               >
                 View More
               </Button>
@@ -201,48 +251,79 @@ export default function ResearchTimeline({ selectedYear, setSelectedYear }) {
         ))}
       </TilesGrid>
 
-      {/* Popup Dialog */}
+      {/* Popup Dialog with glassy effect */}
       <Dialog 
         open={openTileId !== null} 
         onClose={handleClosePopup}
         maxWidth="sm"
         fullWidth
+        PaperProps={{
+          sx: {
+            background: 'rgba(19, 55, 85, 0.5)',
+            backdropFilter: 'blur(40px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(40px) saturate(180%)',
+            border: '1px solid rgba(255, 255, 255, 0.15)',
+            borderRadius: '24px',
+            boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1) inset',
+          }
+        }}
       >
-        <DialogTitle sx={{ m: 0, p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <DialogTitle sx={{ m: 0, p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#fff' }}>
           {selectedTile?.title}
           <IconButton
             aria-label="close"
             onClick={handleClosePopup}
             sx={{
-              color: (theme) => theme.palette.grey[500],
+              color: 'rgba(255, 255, 255, 0.7)',
+              '&:hover': {
+                color: '#fff',
+                background: 'rgba(255, 255, 255, 0.1)',
+              }
             }}
           >
             <CloseIcon />
           </IconButton>
         </DialogTitle>
-        <DialogContent dividers>
-          <Typography variant="body1" paragraph>
+        <DialogContent dividers sx={{ color: '#fff', borderColor: 'rgba(255, 255, 255, 0.1)' }}>
+          <Typography variant="body1" paragraph sx={{ color: 'rgba(255, 255, 255, 0.9)' }}>
             {selectedTile?.summary}
           </Typography>
           <Box sx={{ mt: 2 }}>
-            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+            <Typography variant="subtitle2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }} gutterBottom>
               Funding Amount:
             </Typography>
-            <Typography variant="h6" color="primary" sx={{ fontWeight: 'bold' }}>
+            <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#64b5f6', textShadow: '0 0 10px rgba(100, 181, 246, 0.5)' }}>
               {selectedTile?.money}
             </Typography>
           </Box>
           <Box sx={{ mt: 2 }}>
-            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+            <Typography variant="subtitle2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }} gutterBottom>
               Impact:
             </Typography>
-            <Typography variant="body2">
+            <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.9)' }}>
               {selectedTile?.impact}
             </Typography>
           </Box>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleClosePopup}>Close</Button>
+        <DialogActions sx={{ p: 2, borderTop: '1px solid rgba(255, 255, 255, 0.1)' }}>
+          <Button 
+            onClick={handleClosePopup}
+            sx={{
+              background: 'rgba(19, 55, 85, 0.4)',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              color: '#fff',
+              backdropFilter: 'blur(10px)',
+              WebkitBackdropFilter: 'blur(10px)',
+              borderRadius: '20px',
+              '&:hover': {
+                background: 'rgba(19, 55, 85, 0.6)',
+                border: '1px solid rgba(255, 255, 255, 0.3)',
+                boxShadow: '0 4px 16px rgba(19, 55, 85, 0.5)',
+              }
+            }}
+          >
+            Close
+          </Button>
         </DialogActions>
       </Dialog>
     </Container>
