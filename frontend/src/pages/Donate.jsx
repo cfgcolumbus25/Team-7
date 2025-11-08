@@ -24,9 +24,9 @@ export default function Donate() {
   }
 
   return (
-    <>
+    <div style={{ position: 'relative', width: '100%' }}>
       {/* Back to Overview button */}
-      <div style={{ position: "absolute", top: 24, left: 24, zIndex: 10 }}>
+      <div style={{ position: "absolute", top: 0, left: 0, zIndex: 10 }}>
         <button
           type="button"
           onClick={() => navigate("/")}
@@ -329,7 +329,7 @@ export default function Donate() {
         </div>
       </div>
       </div>
-    </>
+    </div>
   );
 }
 
