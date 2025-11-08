@@ -12,8 +12,7 @@ const Container = styled(Box)(({ theme }) => ({
 // box around the slider to give it a nice background and spacing
 const SliderContainer = styled(Box)(({ theme }) => ({
   padding: theme.spacing(3, 2),
-  backgroundColor: '#fafafa',
-  borderRadius: theme.shape.borderRadius * 2,
+  backgroundColor: 'transparent',
   marginBottom: theme.spacing(4),
   position: 'relative',
 }));
@@ -53,14 +52,11 @@ export default function ResearchTimeline() {
 
   return (
     <Container>
-      <Typography variant="h4" component="h2" gutterBottom sx={{ mb: 4, fontWeight: 'bold' }}>
+      <Typography variant="h4" component="h2" gutterBottom sx={{ mb: 4, fontWeight: 'bold', textAlign: 'center' }}>
         View Donor Impact
       </Typography>
 
       <SliderContainer>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          Select a year:
-        </Typography>
         <SliderWrapper>
           <Slider
             value={selectedYear}
