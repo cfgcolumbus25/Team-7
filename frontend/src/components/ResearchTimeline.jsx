@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Slider, Box, Typography } from '@mui/material';
+import { Slider, Box, Typography, Card, CardContent, Button } from '@mui/material';
 import { styled } from '@mui/material/styles';
 
 // container wrapper to center everything and add some padding
@@ -36,6 +36,26 @@ const YearLabel = styled(Typography)(({ position }) => ({
   textAlign: 'center',
 }));
 
+// grid container for research tiles
+const TilesGrid = styled(Box)(({ theme }) => ({
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+  gap: theme.spacing(3),
+  marginTop: theme.spacing(4),
+}));
+
+// styled research tile card
+const ResearchTile = styled(Card)(({ theme }) => ({
+  height: '100%',
+  display: 'flex',
+  flexDirection: 'column',
+  transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
+  '&:hover': {
+    transform: 'translateY(-4px)',
+    boxShadow: theme.shadows[6],
+  },
+}));
+
 export default function ResearchTimeline() {
   // track which year the user has selected, starting at 2012
   const [selectedYear, setSelectedYear] = useState(2012);
@@ -49,6 +69,19 @@ export default function ResearchTimeline() {
   const min = 2012;
   const max = 2025;
   const position = ((selectedYear - min) / (max - min)) * 100;
+
+  // dummy data for research tiles - returns 2-3 tiles per year
+  const getResearchTiles = (year) => {
+    const tileCount = 2 + (year % 2); // 2 or 3 tiles
+    return Array.from({ length: tileCount }, (_, index) => ({
+      id: `${year}-${index + 1}`,
+      title: `Research Project ${index + 1}`,
+      impact: `Impact description for ${year}`,
+      money: `$${(Math.random() * 500000 + 100000).toFixed(0)}`,
+    }));
+  };
+
+  const researchTiles = getResearchTiles(selectedYear);
 
   return (
     <Container>
@@ -71,6 +104,27 @@ export default function ResearchTimeline() {
           </YearLabel>
         </SliderWrapper>
       </SliderContainer>
+
+      <TilesGrid>
+        {researchTiles.map((tile) => (
+          <ResearchTile key={tile.id}>
+            <CardContent sx={{ flexGrow: 1 }}>
+              <Typography variant="h6" component="h3" gutterBottom sx={{ fontWeight: 'bold' }}>
+                {tile.title}
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                {tile.impact}
+              </Typography>
+              <Typography variant="h6" color="primary" sx={{ mb: 2, fontWeight: 'bold' }}>
+                {tile.money}
+              </Typography>
+              <Button variant="outlined" size="small" fullWidth>
+                View More
+              </Button>
+            </CardContent>
+          </ResearchTile>
+        ))}
+      </TilesGrid>
     </Container>
   );
 }
