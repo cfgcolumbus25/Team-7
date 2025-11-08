@@ -1,6 +1,6 @@
-import DashboardPlaceholder from './components/dashboardplaceholder.jsx'
-import Header from './components/header.jsx'
-import Sidebar from './components/sidebar.jsx'
+import DashboardPlaceholder from "./components/Dashboardplaceholder.jsx";
+import Header from "./components/Header.jsx";
+import Sidebar from "./components/Sidebar.jsx";
 
 export default function App() {
   return (
@@ -11,5 +11,5 @@ export default function App() {
         <DashboardPlaceholder />
       </div>
     </div>
-  )
+  );
 }
