@@ -17,6 +17,7 @@ import { styled } from "@mui/material/styles";
 import React, { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useUser } from "../contexts/UserContext.jsx";
+import { researchAPI } from "../services/api.js";
 import { researchData } from "../data/researchData.js";
 
 // container wrapper to center everything and add some padding
@@ -160,7 +161,7 @@ export default function ResearchTimeline({ selectedYear, setSelectedYear }) {
   const [hoveredYear, setHoveredYear] = useState(null);
   
   // use props if provided, otherwise use local state
-  const [localYear, setLocalYear] = useState(2012);
+  const [localYear, setLocalYear] = useState(2020);
   const currentYear = selectedYear !== undefined ? selectedYear : localYear;
   const updateYear = setSelectedYear || setLocalYear;
   
@@ -169,10 +170,81 @@ export default function ResearchTimeline({ selectedYear, setSelectedYear }) {
   // track which tile's popup is open (null if none)
   const [openTileId, setOpenTileId] = useState(null);
 
+  // Research tiles from database
+  const [researchTiles, setResearchTiles] = useState([]);
+  const [loadingTiles, setLoadingTiles] = useState(false);
+  const [tilesError, setTilesError] = useState(null);
+
   // controls for smooth staggered animation of tiles on year change
   const [showTiles, setShowTiles] = useState(true);
+  
+  // Fetch research tiles - combine hardcoded data with database data
   useEffect(() => {
-    // slightly longer hide so the re-entry animations feel smoother
+    const fetchTiles = async () => {
+      setLoadingTiles(true);
+      setTilesError(null);
+      try {
+        // Get hardcoded demo data for this year
+        const hardcodedForYear = researchData
+          .filter(tile => tile.year === currentYear)
+          .map(tile => ({
+            id: tile.id,
+            title: tile.title,
+            impact: tile.impact,
+            money: tile.money,
+            summary: tile.summary,
+            year: tile.year,
+            source: 'hardcoded' // mark the source
+          }));
+        
+        // Fetch from database API
+        const databaseData = await researchAPI.getAll();
+        
+        // Filter database data by selected year
+        const databaseForYear = databaseData
+          .filter(tile => tile.year === currentYear)
+          .map(tile => ({
+            id: tile.id,
+            title: tile.title,
+            impact: tile.impact,
+            money: tile.money,
+            summary: tile.summary,
+            year: tile.year,
+            source: 'database' // mark the source
+          }));
+        
+        // Combine both sources - hardcoded first, then database
+        // Remove duplicates by ID (database takes precedence)
+        const allTiles = [...hardcodedForYear, ...databaseForYear];
+        const uniqueTiles = Array.from(
+          new Map(allTiles.map(tile => [tile.id, tile])).values()
+        );
+        
+        setResearchTiles(uniqueTiles);
+      } catch (error) {
+        console.error('Failed to fetch research tiles:', error);
+        setTilesError(error.message);
+        // Fall back to hardcoded data on error
+        const hardcodedForYear = researchData
+          .filter(tile => tile.year === currentYear)
+          .map(tile => ({
+            id: tile.id,
+            title: tile.title,
+            impact: tile.impact,
+            money: tile.money,
+            summary: tile.summary,
+            year: tile.year,
+            source: 'hardcoded'
+          }));
+        setResearchTiles(hardcodedForYear);
+      } finally {
+        setLoadingTiles(false);
+      }
+    };
+
+    fetchTiles();
+    
+    // Trigger animation
     setShowTiles(false);
     const t = setTimeout(() => setShowTiles(true), 140);
     return () => clearTimeout(t);
@@ -198,44 +270,6 @@ export default function ResearchTimeline({ selectedYear, setSelectedYear }) {
     setOpenTileId(null);
   };
 
-  // Get research tiles for a specific year from real data
-  const getResearchTiles = (year) => {
-    // Filter real research data by year
-    const realTilesForYear = researchData
-      .filter((tile) => tile.year === year)
-      .map((tile) => ({
-        id: tile.id,
-        title: tile.title,
-        impact: tile.impact,
-        money: tile.money,
-        summary: tile.summary,
-      }));
-
-    // Get approved tiles from localStorage (for any manually added projects)
-    const approvedTiles = JSON.parse(
-      localStorage.getItem("approvedResearchTiles") || "[]"
-    );
-    const approvedForYear = approvedTiles
-      .filter((tile) => tile.year === year)
-      .map((tile) => ({
-        id: tile.id,
-        title: tile.title,
-        impact: tile.impact,
-        money: tile.money,
-        summary: tile.summary,
-      }));
-
-    // Combine real data with approved tiles (approved tiles take precedence if same ID)
-    const allTiles = [...realTilesForYear, ...approvedForYear];
-    // Remove duplicates by ID (keep approved tiles if duplicate)
-    const uniqueTiles = Array.from(
-      new Map(allTiles.map((tile) => [tile.id, tile])).values()
-    );
-
-    return uniqueTiles;
-  };
-
-  const researchTiles = getResearchTiles(currentYear);
   const selectedTile = researchTiles.find((tile) => tile.id === openTileId);
 
   const YEARS = [2020, 2021, 2022, 2023, 2024, 2025];
@@ -306,7 +340,7 @@ export default function ResearchTimeline({ selectedYear, setSelectedYear }) {
               >
                 DONOR
               </span>
-            )}{" "}
+            )}
             IMPACT
           </Typography>
         </Box>
@@ -461,68 +495,88 @@ export default function ResearchTimeline({ selectedYear, setSelectedYear }) {
               </Typography>
             </Box>
 
-            <TilesGrid>
-              {researchTiles.map((tile, idx) => (
-                <Grow
-                  key={tile.id}
-                  in={showTiles}
-                  style={{
-                    transformOrigin: "0 0 0",
-                    transitionDelay: `${idx * 90}ms`,
-                  }}
-                  timeout={500 + idx * 90}
-                >
-                  <div>
-                    <ResearchTile>
-                      <CardContent sx={{ flexGrow: 1 }}>
-                        <Typography
-                          variant="h6"
-                          component="h3"
-                          gutterBottom
-                          sx={{ fontWeight: "bold", color: "#000" }}
-                        >
-                          {tile.title}
-                        </Typography>
-                        <Typography
-                          variant="body2"
-                          sx={{ mb: 2, color: "rgba(0, 0, 0, 0.7)" }}
-                        >
-                          {tile.impact}
-                        </Typography>
-                        <Typography
-                          variant="h6"
-                          sx={{ mb: 2, fontWeight: "bold", color: "#000" }}
-                        >
-                          <MoneyCount
-                            amount={tile.money}
-                            duration={1000 + idx * 80}
-                          />
-                        </Typography>
-                        <Button
-                          variant="outlined"
-                          size="small"
-                          fullWidth
-                          onClick={() => handleOpenPopup(tile.id)}
-                          sx={{
-                            background: "#FFEAA7",
-                            border: "none",
-                            color: "#000",
-                            borderRadius: "20px",
-                            fontWeight: 600,
-                            "&:hover": {
+            {loadingTiles ? (
+              <Box sx={{ textAlign: 'center', py: 4 }}>
+                <Typography variant="body1" color="text.secondary">
+                  Loading research initiatives...
+                </Typography>
+              </Box>
+            ) : tilesError ? (
+              <Box sx={{ textAlign: 'center', py: 4 }}>
+                <Typography variant="body1" color="error">
+                  Error loading research: {tilesError}
+                </Typography>
+              </Box>
+            ) : researchTiles.length === 0 ? (
+              <Box sx={{ textAlign: 'center', py: 4 }}>
+                <Typography variant="body1" color="text.secondary">
+                  No research initiatives found for {currentYear}.
+                </Typography>
+              </Box>
+            ) : (
+              <TilesGrid>
+                {researchTiles.map((tile, idx) => (
+                  <Grow
+                    key={tile.id}
+                    in={showTiles}
+                    style={{
+                      transformOrigin: "0 0 0",
+                      transitionDelay: `${idx * 90}ms`,
+                    }}
+                    timeout={500 + idx * 90}
+                  >
+                    <div>
+                      <ResearchTile>
+                        <CardContent sx={{ flexGrow: 1 }}>
+                          <Typography
+                            variant="h6"
+                            component="h3"
+                            gutterBottom
+                            sx={{ fontWeight: "bold", color: "#000" }}
+                          >
+                            {tile.title}
+                          </Typography>
+                          <Typography
+                            variant="body2"
+                            sx={{ mb: 2, color: "rgba(0, 0, 0, 0.7)" }}
+                          >
+                            {tile.impact}
+                          </Typography>
+                          <Typography
+                            variant="h6"
+                            sx={{ mb: 2, fontWeight: "bold", color: "#000" }}
+                          >
+                            <MoneyCount
+                              amount={tile.money}
+                              duration={1000 + idx * 80}
+                            />
+                          </Typography>
+                          <Button
+                            variant="outlined"
+                            size="small"
+                            fullWidth
+                            onClick={() => handleOpenPopup(tile.id)}
+                            sx={{
                               background: "#FFEAA7",
-                              opacity: 0.9,
-                            },
-                          }}
-                        >
-                          View More
-                        </Button>
-                      </CardContent>
-                    </ResearchTile>
-                  </div>
-                </Grow>
-              ))}
-            </TilesGrid>
+                              border: "none",
+                              color: "#000",
+                              borderRadius: "20px",
+                              fontWeight: 600,
+                              "&:hover": {
+                                background: "#FFEAA7",
+                                opacity: 0.9,
+                              },
+                            }}
+                          >
+                            View More
+                          </Button>
+                        </CardContent>
+                      </ResearchTile>
+                    </div>
+                  </Grow>
+                ))}
+              </TilesGrid>
+            )}
           </Box>
 
           {/* Popup Dialog with glassy effect */}
