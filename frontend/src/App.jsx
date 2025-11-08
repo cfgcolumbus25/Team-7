@@ -4,6 +4,7 @@ import AdminDashboard from "./pages/AdminDashboard.jsx";
 import SignIn from "./pages/SignIn.jsx";
 import Header from "./components/header.jsx";
 import NavBar from "./components/NavBar.jsx";
+import Footer from "./components/Footer.jsx";
 import { UserProvider } from "./contexts/UserContext.jsx";
 
 function Layout() {
@@ -17,6 +18,8 @@ function Layout() {
       <main style={{ padding: 24, flex: 1 }}>
         <Outlet />
       </main>
+      
+      <Footer />
     </div>
   );
 }
