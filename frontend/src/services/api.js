@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 
 const API_BASE_URL = 'http://localhost:8000/api';
 const SUPABASE_URL = 'https://foliylmmwevcanfnssna.supabase.co';
-const SUPABASE_ANON_KEY = '';
+const SUPABASE_ANON_KEY = ''
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
